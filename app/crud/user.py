@@ -9,12 +9,16 @@ fake_users_db = {
     }
 }
 
-def get_user_by_username(username: str):
+async def get_user_by_username(username: str):
     user_dict = fake_users_db.get(username)
     return user_dict
 
-def authenticate_user(username: str, password: str):
-    user = get_user_by_username(username)
+async def authenticate_user(username: str, password: str):
+    """
+    Asynchronous user authentication function
+    Ensure it can be called with await even when replaced in the database
+    """
+    user = await get_user_by_username(username)
     if not user:
         return None
     if not verify_password(password, user["hashed_password"]):

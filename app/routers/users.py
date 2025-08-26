@@ -6,7 +6,10 @@ from app.crud.user import get_user_by_username
 
 router = APIRouter()
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    """
+    Retrieve user from JWT
+    """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
@@ -15,11 +18,15 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    user = get_user_by_username(username)
+    user = await get_user_by_username(username)
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
     return user
 
 @router.get("/me")
-def read_users_me(current_user: dict = Depends(get_current_user)):
+async def read_users_me(current_user: dict = Depends(get_current_user)):
+    """
+    Returns the logged-in user information
+    Does not return the hashed password
+    """
     return current_user
