@@ -10,8 +10,7 @@ fake_users_db = {
 }
 
 async def get_user_by_username(username: str):
-    user_dict = fake_users_db.get(username)
-    return user_dict
+    return fake_users_db.get(username)
 
 async def authenticate_user(username: str, password: str):
     """
@@ -24,3 +23,17 @@ async def authenticate_user(username: str, password: str):
     if not verify_password(password, user["hashed_password"]):
         return None
     return user
+
+async def create_user(username: str, password: str):
+    """
+    Create a new user and save into fake_users_db
+    """
+    if username in fake_users_db:
+        return None
+    hashed_pw = get_password_hash(password)
+    fake_users_db[username] = {
+        "username": username,
+        "hashed_password": hashed_pw,
+        "disabled": False,
+    }
+    return fake_users_db[username]
