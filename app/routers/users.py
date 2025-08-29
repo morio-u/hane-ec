@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from jose import jwt, JWTError
-from app.core.config import SECRET_KEY, ALGORITHM
+from app.core.config import settings
 from app.routers.auth import oauth2_scheme
 from app.crud.user import get_user_by_username, create_user
 
@@ -13,7 +13,7 @@ class UserCreate(BaseModel):
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise HTTPException(status_code=401, detail="Invalid token")
