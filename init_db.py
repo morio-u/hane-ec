@@ -1,5 +1,5 @@
 from app.database import SessionLocal, engine
-from app.models import Base, Product
+from app.models.product import Base, Product
 
 Base.metadata.create_all(bind=engine)  # テーブル作成
 

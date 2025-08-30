@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 # Import my SQLAlchemy Base
-from app.models import Base
+from app.database import Base
 # Get DATABASE_URL
 from app.core.config import settings
 
