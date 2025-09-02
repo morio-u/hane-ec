@@ -1,12 +1,13 @@
 from sqlalchemy import Column, BigInteger, String, Boolean, DateTime, DECIMAL
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from app.database import Base
 
 
 class ShippingRule(Base):
     __tablename__ = "shipping_rules"
 
-    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    id = Column(BigInteger, primary_key=True, index=True, autoincrement=True)
     min_weight = Column(DECIMAL(10, 2))
     max_weight = Column(DECIMAL(10, 2))
     min_size = Column(DECIMAL(10, 2))
@@ -17,3 +18,5 @@ class ShippingRule(Base):
     is_deleted = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    products = relationship("Product", back_populates="shipping_rule")
