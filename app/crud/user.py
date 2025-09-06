@@ -1,12 +1,9 @@
-from sqlalchemy.orm import Session
+import re
 from typing import Optional
+from sqlalchemy.orm import Session
 from app.core.security import get_password_hash, verify_password
 from app.models.user import User
 from sqlalchemy import func
-import re
-
-def get_user_by_username(db: Session, username: str) -> Optional[User]:
-    return db.query(User).filter(User.name == username).first()
 
 def get_user_by_email(db: Session, input_email: str) -> Optional[User]:
     return db.query(User).filter(func.lower(User.email) == input_email.lower()).first()
@@ -15,17 +12,17 @@ def clean_phone_number(phone_number: str) -> str:
     # Regular expression to remove non-numeric characters
     return re.sub(r'\D', '', phone_number)
 
-async def authenticate_user(db: Session, username: str, password: str):
+def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
     """
     Asynchronous user authentication function
     Ensure it can be called with await even when replaced in the database
     """
-    user = await get_user_by_username(db, username)
-    if not user:
+    user_from_db = get_user_by_email(db, email)
+    if not user_from_db:
         return None
-    if not verify_password(password, user["hashed_password"]):
+    if not verify_password(password, user_from_db.password):
         return None
-    return user
+    return user_from_db
 
 def create_user(
         db: Session,
@@ -36,25 +33,32 @@ def create_user(
         email: str,
         password: str,
         is_send_newsletter: bool,
-        middle_name: Optional[str] = None,
+        middle_name: Optional[str] = None
     ):
     """
     Create a new user and save it to the database
     """
+    # Hash the password and remove non-numeric characters from the phone number
     hashed_pw = get_password_hash(password)
-    normalized_pn = clean_phone_number(phone_number)
+    cleaned_pn = clean_phone_number(phone_number)
 
     new_user = User(
         last_name=last_name,
         middle_name=middle_name,
         first_name=first_name,
         gender=gender,
-        phone_number=normalized_pn,
+        phone_number=cleaned_pn,
         email=email,
         password=hashed_pw,
         is_send_newsletter=is_send_newsletter
     )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user) 
-    return last_name
+
+    try:
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+    except Exception as e:
+        db.rollback()
+        raise e
+
+    return new_user
