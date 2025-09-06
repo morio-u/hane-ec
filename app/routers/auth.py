@@ -1,25 +1,37 @@
 from datetime import timedelta
 from typing import Dict
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import APIRouter, Request, HTTPException, status, Depends, Form
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from app.core.schemas import OAuth2PasswordRequestLoginForm
+from app.schemas.auth import OAuth2PasswordRequestLoginForm
 from app.core.jwt import create_access_token
 from app.core.config import settings
 from app.crud.user import authenticate_user
 from app.database import get_db
 
 router = APIRouter()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+templates = Jinja2Templates(directory="app/templates/shop")
 
-@router.post("/token")
-def login(db: Session = Depends(get_db), form_data: OAuth2PasswordRequestLoginForm = Depends()) -> Dict[str, str]:
+@router.get("/login", response_class=HTMLResponse)
+def read_login_form(request: Request):
+    return templates.TemplateResponse(
+        "login.html", {"request": request}
+    )
+
+@router.post("/login", name="login")
+def login(
+        db: Session = Depends(get_db),
+        # TODO: Move to OAuth2PasswordRequestLoginForm
+        email: str = Form(...),
+        password: str = Form(...)
+    ) -> Dict[str, str]:
     """
     Login Processing
     Receives form_data.email / form_data.password,
     and returns a JWT upon successful authentication.
     """
-    user_from_db = authenticate_user(db, form_data.email, form_data.password)
+    user_from_db = authenticate_user(db, email, password)
     if not user_from_db:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
