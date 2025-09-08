@@ -1,14 +1,14 @@
 from datetime import timedelta
 from typing import Dict
 from fastapi import APIRouter, Request, HTTPException, status, Depends, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from app.schemas.auth import OAuth2PasswordRequestLoginForm
 from app.core.jwt import create_access_token
 from app.core.config import settings
 from app.crud.user import authenticate_user
 from app.database import get_db
+from app.schemas.auth import OAuth2PasswordRequestLoginForm
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")
@@ -40,6 +40,15 @@ def login(
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user_from_db.id}, expires_delta=access_token_expires
+        data={"sub": user_from_db.email}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": settings.TOKEN_TYPE}
+
+    redirect = RedirectResponse(url="/", status_code=303)
+    redirect.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        max_age=60 * 60,
+        samesite="lax"
+    )
+    return redirect

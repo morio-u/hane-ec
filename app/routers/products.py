@@ -9,15 +9,9 @@ from app.models.product import Product
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")
 
-@router.get("/products", response_class=HTMLResponse)
+@router.get("/products")
 def read_products(request: Request, db: Session = Depends(get_db)):
     products = db.query(Product).all()
     return templates.TemplateResponse(
         "products.html", {"request": request, "products": products}
-    )
-
-@router.get("/", response_class=HTMLResponse)
-def read_home(request: Request):
-    return templates.TemplateResponse(
-        "index.html", {"request": request}
     )
