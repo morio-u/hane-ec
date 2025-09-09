@@ -52,3 +52,9 @@ def login(
         samesite="lax"
     )
     return redirect
+
+@router.get("/logout")
+def logout():
+    redirect = RedirectResponse(url="/", status_code=303)
+    redirect.delete_cookie(key="access_token")
+    return redirect
