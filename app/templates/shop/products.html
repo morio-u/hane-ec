@@ -1,14 +1,28 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Products</title>
-</head>
-<body>
-    <h1>Product List</h1>
-    <ul>
-    {% for product in products %}
-        <li>{{ product.id }} - {{ product.name }} : ${{ product.price }}</li>
-    {% endfor %}
-    </ul>
-</body>
-</html>
+{% extends "base_shop.html" %}
+
+{% block content %}
+    <div id="fh5co-product">
+    <div class="container">
+        <div class="row">
+        {% for product in products %}
+        <div class="col-md-4 text-center animate-box">
+            <div class="product">
+            <div class="product-grid" style="background-image:url('{{ url_for('static', path='images/products/product-1.jpg') }}');">
+                <div class="inner">
+                <p>
+                    <a href="/cart/add/{{ product.id }}" class="icon"><i class="icon-shopping-cart"></i></a>
+                    <a href="/products/{{ product.id }}" class="icon"><i class="icon-eye"></i></a>
+                </p>
+                </div>
+            </div>
+            <div class="desc">
+                <h3><a href="/products/{{ product.id }}">{{ product.name }}</a></h3>
+                <span class="price">${{ "%.2f"|format(product.price_excluding_tax) }}</span>
+            </div>
+            </div>
+        </div>
+        {% endfor %}
+        </div>
+    </div>
+    </div>
+{% endblock %}

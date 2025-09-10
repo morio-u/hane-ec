@@ -4,9 +4,8 @@ from app.routers import home, products, auth, users
 
 app = FastAPI()
 
-# static
+# shop
 app.mount("/static", StaticFiles(directory="app/static/shop"), name="static")
-
 app.include_router(home.router)
 app.include_router(products.router)
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
