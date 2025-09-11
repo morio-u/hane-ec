@@ -4,21 +4,27 @@
     <div id="fh5co-product">
     <div class="container">
         <div class="row">
+        <div class="col-md-8 col-md-offset-2 text-center fh5co-heading">
+            <h2>Product List</h2>
+            <p>Explore our handpicked selection just for you.</p>
+        </div>
         {% for product in products %}
         <div class="col-md-4 text-center animate-box">
             <div class="product">
-            <div class="product-grid" style="background-image:url('{{ url_for('static', path='images/products/product-1.jpg') }}');">
-                <div class="inner">
-                <p>
-                    <a href="/cart/add/{{ product.id }}" class="icon"><i class="icon-shopping-cart"></i></a>
-                    <a href="/products/{{ product.id }}" class="icon"><i class="icon-eye"></i></a>
-                </p>
+                <a href="/products/{{ product.id }}" class="full-link">
+                    <div class="product-grid" style="background-image:url('{{ url_for('static', path='images/products/product-1.jpg') }}');">
+                        <div class="inner">
+                        <!-- <p>
+                            <a class="icon"><i class="icon-shopping-cart"></i></a>
+                            <a class="icon"><i class="icon-eye"></i></a>
+                        </p> -->
+                        </div>
+                    </div>
+                </a>
+                <div class="desc">
+                    <h3><a href="/products/{{ product.id }}">{{ product.name }}</a></h3>
+                    <span class="price">${{ "%.2f"|format(product.price_excluding_tax) }}</span>
                 </div>
-            </div>
-            <div class="desc">
-                <h3><a href="/products/{{ product.id }}">{{ product.name }}</a></h3>
-                <span class="price">${{ "%.2f"|format(product.price_excluding_tax) }}</span>
-            </div>
             </div>
         </div>
         {% endfor %}
