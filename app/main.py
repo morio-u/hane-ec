@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from app.routers import home, products, auth, users
+from app.routers import home, products, auth, users, cart
 
 app = FastAPI()
 
@@ -10,3 +10,4 @@ app.include_router(home.router)
 app.include_router(products.router)
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(users.router, prefix="/users", tags=["users"])
+app.include_router(cart.router, prefix="/cart", tags=["cart"])

@@ -2,27 +2,29 @@
 
 {% block content %}
 <div id="fh5co-product">
-  <div class="container">
-    <div class="row">
-      <div class="col-md-6">
-        <div class="product-grid" style="background-image:url('{{ url_for('static', path='images/products/product-1.jpg') }}'); height:400px; background-size:cover;">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="product-grid" style="background-image:url('{{ url_for('static', path='images/products/product-1.jpg') }}'); height:400px; background-size:cover;">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h4>{{ product.name }}</h4>
+                <p class="price">${{ "%.2f"|format(product.price_excluding_tax) }}</p>
+                <p>{{ product.description }}</p>
+                <form action="/cart/add/{{ product.id }}" method="post">
+                    <input type="hidden" name="name" value="{{ product.name }}">
+                    <input type="hidden" name="price" value="{{ "%.2f"|format(product.price_excluding_tax) }}">
+                    <div class="form-group">
+                        <label for="quantity">Quantity:</label>
+                        <input type="number" name="quantity" id="quantity" value="1" min="1" class="form-control" style="width:100px;">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="icon-shopping-cart"></i> Add to Cart
+                    </button>
+                </form>
+            </div>
         </div>
-      </div>
-      <div class="col-md-6">
-        <h4>{{ product.name }}</h4>
-        <p class="price">${{ "%.2f"|format(product.price_excluding_tax) }}</p>
-        <p>{{ product.description }}</p>
-        <form action="/cart/add/{{ product.id }}" method="post">
-          <div class="form-group">
-            <label for="quantity">Quantity:</label>
-            <input type="number" name="quantity" id="quantity" value="1" min="1" class="form-control" style="width:100px;">
-          </div>
-          <button type="submit" class="btn btn-primary">
-            <i class="icon-shopping-cart"></i> Add to Cart
-          </button>
-        </form>
-      </div>
     </div>
-  </div>
 </div>
 {% endblock %}

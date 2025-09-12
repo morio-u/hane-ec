@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import Request, APIRouter, Depends
 from sqlalchemy.orm import Session
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from fastapi import Request
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models.product import Product
