@@ -9,22 +9,37 @@
                 <thead>
                     <tr>
                         <th style="width: 10%;">Image</th>
-                        <th style="width: 40%;">Product</th>
+                        <th style="width: 30%;">Product</th>
                         <th style="width: 15%;">Price</th>
                         <th style="width: 15%;">Quantity</th>
-                        <th style="width: 20%;">Total</th>
+                        <th style="width: 15%;">Total</th>
+                        <th style="width: 15%;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for pid, product in cart.items() %}
                     <tr>
                         <td>
-                            <img src="{{ url_for('static', path='images/products/product-1.jpg') }}" alt="{{ product.name }}" style="width:80px; height:auto;">
+                            <img src="{{ url_for('static', path='images/products/product-1.jpg') }}" 
+                                 alt="{{ product.name }}" style="width:80px; height:auto;">
                         </td>
                         <td>{{ product.name }}</td>
                         <td>${{ "%.2f"|format(product.price) }}</td>
-                        <td>{{ product.quantity }}</td>
+                        <td>
+                            <!-- update quantity -->
+                            <form action="/cart/update/{{ pid }}" method="post" style="display:flex; align-items:center;">
+                                <input type="number" name="quantity" value="{{ product.quantity }}" 
+                                       min="0" class="form-control form-control-sm" style="width:70px;">
+                                <button type="submit" class="btn btn-primary btn-sm ml-2">Update</button>
+                            </form>
+                        </td>
                         <td>${{ "%.2f"|format(product.total) }}</td>
+                        <td>
+                            <!-- remove -->
+                            <form action="/cart/remove/{{ pid }}" method="post">
+                                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                            </form>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
