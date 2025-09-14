@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Enum as SQLEnum, Boolean, SmallInteger, TIMESTAMP
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
 from enum import Enum
@@ -33,3 +34,7 @@ class User(Base):
     is_deleted = Column(Boolean, default=False, nullable=False)
     created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    addresses = relationship("Address", back_populates="user", cascade="all, delete-orphan")
+    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
+    payments = relationship("Payment", back_populates="user", cascade="all, delete-orphan")
