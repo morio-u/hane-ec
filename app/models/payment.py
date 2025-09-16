@@ -5,10 +5,12 @@ from app.database import Base
 from enum import Enum
 
 class PaymentStatusEnum(str, Enum):
+    unpaid = "unpaid"
     pending = "pending"
-    completed = "completed"
-    refunded = "refunded"
+    paid = "paid"
     failed = "failed"
+    refunded = "refunded"
+    cancelled = "cancelled"
 
 class Payment(Base):
     __tablename__ = "payments"

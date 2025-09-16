@@ -29,3 +29,4 @@ class Sku(Base):
     product = relationship("Product", back_populates="skus")
     color = relationship("Color", back_populates="skus")
     size = relationship("Size", back_populates="skus")
+    order_items = relationship("OrderItem", back_populates="sku")

@@ -26,7 +26,7 @@ class Product(Base):
     subcategory_id = Column(SmallInteger, ForeignKey("subcategories.id"), nullable=False, index=True)
     brand_id = Column(SmallInteger, ForeignKey("brands.id"), nullable=False, index=True)
     shipping_rule_id = Column(Integer, ForeignKey("shipping_rules.id"), nullable=True)
-    name = Column(String(50), nullable=False, index=True)
+    name = Column(String(255), nullable=False, index=True)
     description = Column(Text, nullable=True)
     purchase_type = Column(SQLEnum(PurchaseTypeEnum), nullable=False)
     price_excluding_tax = Column(DECIMAL(12, 2), nullable=True)
