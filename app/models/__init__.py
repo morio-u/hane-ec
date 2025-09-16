@@ -10,3 +10,7 @@ from .size import Size
 from .image import Image
 from .shipping_rule import ShippingRule
 from .product_image import ProductImage
+from .address import Address
+from .order import Order
+from .order_item import OrderItem
+from .payment import Payment
