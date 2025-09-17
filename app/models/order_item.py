@@ -16,5 +16,5 @@ class OrderItem(Base):
     created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    order = relationship("Order", back_populates="items")
-    sku = relationship("SKU", back_populates="order_items")
+    order = relationship("Order", back_populates="order_items")
+    sku = relationship("Sku", back_populates="order_items")

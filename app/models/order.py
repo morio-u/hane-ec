@@ -43,7 +43,11 @@ class Order(Base):
     shipping_state = Column(String(50), nullable=False)
     shipping_zip = Column(String(10), nullable=False)
     shipping_phone_number = Column(String(15), nullable=False)
+    subtotal_amount = Column(DECIMAL(12, 2), nullable=False, default=0)
+    shipping_fee = Column(DECIMAL(12, 2), nullable=False, default=0)
+    payment_fee = Column(DECIMAL(12,2), nullable=False, default=0)
     total_amount = Column(DECIMAL(12, 2), nullable=False, default=0)
+    shipping_method = Column(String(50), nullable=False)
     order_status = Column(SQLEnum(OrderStatusEnum), default=OrderStatusEnum.created, nullable=False)
     shipping_status = Column(SQLEnum(ShippingStatusEnum), default=ShippingStatusEnum.unshipped, nullable=False)
     payment_status = Column(SQLEnum(PaymentStatusEnum), default=PaymentStatusEnum.pending, nullable=False)
@@ -51,5 +55,5 @@ class Order(Base):
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now(), nullable=False)
 
     user = relationship("User", back_populates="orders")
-    items = relationship("OrederItem", back_populates="order", cascade="all, delete-orphan")
+    order_items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     payments = relationship("Payment", back_populates="order", cascade="all, delete-orphan")

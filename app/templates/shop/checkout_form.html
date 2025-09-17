@@ -1,0 +1,48 @@
+{% extends "base_shop.html" %}
+
+{% block content %}
+<div id="fh5co-shipping">
+    <div class="container">
+        <div class="row animate-box">
+            <div class="col-md-6 col-md-offset-3 text-center fh5co-heading">
+                <h2>Shipping Information</h2>
+                <p>Please enter your shipping details below.</p>
+            </div>
+        </div>
+        <div class="row animate-box">
+            <div class="col-md-6 col-md-offset-3 col-xs-10 col-xs-offset-1">
+                <form action="/checkout/confirm" method="post" class="form-horizontal">
+                    <div class="form-group">
+                        <label for="recipient_name" class="sr-only">First Name</label>
+                        <input type="text" class="form-control" id="recipient_name" name="recipient_name" placeholder="First Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="recipient_name" class="sr-only">Full Name</label>
+                        <input type="text" class="form-control" id="recipient_name" name="recipient_name" placeholder="Full Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="postal_code" class="sr-only">Postal Code</label>
+                        <input type="text" class="form-control" id="postal_code" name="postal_code" placeholder="Postal Code (e.g. 123-4567)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="address_line1" class="sr-only">Address Line 1</label>
+                        <input type="text" class="form-control" id="address_line1" name="address_line1" placeholder="Prefecture, City, Town" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="address_line2" class="sr-only">Address Line 2</label>
+                        <input type="text" class="form-control" id="address_line2" name="address_line2" placeholder="Apartment, Building, etc. (Optional)">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone_number" class="sr-only">Phone Number</label>
+                        <input type="tel" class="form-control" id="phone_number" name="phone_number" placeholder="Phone Number" required>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block">Confirm Order</button>
+                    </div>
+                    <p class="text-center"><a href="/cart">Back to Cart</a></p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

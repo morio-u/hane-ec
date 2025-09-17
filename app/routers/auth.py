@@ -72,7 +72,6 @@ def signup(
         # TODO: Move to UserCreate
         last_name: str = Form(...),
         first_name: str = Form(...),
-        middle_name: str = Form(None),
         gender: int = Form(...),
         phone_number: str = Form(...),
         email: str = Form(...),
@@ -97,8 +96,7 @@ def signup(
         phone_number,
         email,
         password,
-        is_send_newsletter,
-        middle_name,
+        is_send_newsletter
     )
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)

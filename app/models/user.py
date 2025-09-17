@@ -22,7 +22,6 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     last_name = Column(String(50), nullable=False)
-    middle_name = Column(String(50), nullable=True)
     first_name = Column(String(50), nullable=False)
     gender = Column(SQLEnum(GenderEnum), nullable=False)
     phone_number = Column(String(20), nullable=False)
