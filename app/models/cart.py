@@ -12,5 +12,5 @@ class Cart(Base):
     created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    user = relationship("User", back_populates="cart")
+    user = relationship("User", back_populates="carts")
     cart_items = relationship("CartItem", back_populates="cart", cascade="all, delete-orphan")

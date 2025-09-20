@@ -4,6 +4,7 @@ from app.models.category import Category
 from app.models.subcategory import Subcategory
 from app.models.brand import Brand
 from app.models.product import Product, PurchaseTypeEnum, ProductStatusEnum
+from app.models.sku import Sku, SkuStatusEnum
 
 def seed_departments(db):
     departments = [
@@ -67,6 +68,39 @@ def seed_products(db):
     db.add_all(products)
     db.commit()
 
+def seed_skus(db):
+    products = db.query(Product).all()
+
+    sample_skus = []
+    barcode_base = 4900000000000
+
+    for i, product in enumerate(products, start=1):
+        sample_skus.append(
+            Sku(
+                product_id=product.id,
+                barcode=str(barcode_base + i * 10 + 1),
+                color_id=None,
+                size_id=None,
+                stock_quantity=100,
+                special_price=None,
+                status=SkuStatusEnum.active,
+            )
+        )
+        sample_skus.append(
+            Sku(
+                product_id=product.id,
+                barcode=str(barcode_base + i * 10 + 2),
+                color_id=None,
+                size_id=None,
+                stock_quantity=50,
+                special_price=49.99 if product.id == 1 else None,
+                status=SkuStatusEnum.active,
+            )
+        )
+
+    db.add_all(sample_skus)
+    db.commit()
+
 def seed_all():
     db = SessionLocal()
     try:
@@ -75,6 +109,7 @@ def seed_all():
         seed_subcategories(db)
         seed_brands(db)
         seed_products(db)
+        seed_skus(db)
     finally:
         db.close()
 

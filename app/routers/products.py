@@ -19,9 +19,12 @@ def get_products(request: Request, db: Session = Depends(get_db), user = Depends
 @router.get("/products/{product_id}", response_class=HTMLResponse)
 def get_product_detail(request: Request, product_id: int, db: Session = Depends(get_db), user = Depends(get_current_user)):
     product = db.query(Product).filter(Product.id == product_id).first()
-    if not product:
+    if product:
+        skus = product.skus
+    else:
         return RedirectResponse(url="/products", status_code=302)
+
     return templates.TemplateResponse(
-        "product_detail.html", {"request": request, "product": product, "user": user}
+        "product_detail.html", {"request": request, "product": product, "skus": skus, "user": user}
     )
     

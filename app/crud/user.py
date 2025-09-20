@@ -32,8 +32,7 @@ def create_user(
         phone_number: str,
         email: str,
         password: str,
-        is_send_newsletter: bool,
-        middle_name: Optional[str] = None
+        is_send_newsletter: bool
     ):
     """
     Create a new user and save it to the database

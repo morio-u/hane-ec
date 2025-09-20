@@ -13,5 +13,5 @@ class CartItem(Base):
     created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    cart = relationship("Cart", back_populates="items")
+    cart = relationship("Cart", back_populates="cart_items")
     sku = relationship("Sku")
