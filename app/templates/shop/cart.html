@@ -48,12 +48,16 @@
             <div class="text-right">
                 <h4>
                     Grand Total: $
-                    {{ "%.2f"|format(grand_total) }}
+                    {{ "%.2f"|format(subtotal_amount) }}
                     (tax calculated at checkout)
                 </h4>
-                <a href="/checkout" class="btn btn-success">
-                    <i class="icon-credit-card"></i> Proceed to Checkout
-                </a>
+                <form action="/checkout" method="post">
+                    <input type="hidden" name="subtotal_amount" value="{{ subtotal_amount }}">
+                    <!-- 必要に応じて cart_id や item 数なども hidden に -->
+                    <button type="submit" class="btn btn-success">
+                        <i class="icon-credit-card"></i> Proceed to Checkout
+                    </button>
+                </form>
             </div>
         {% else %}
             <p class="text-center">Your cart is empty.</p>

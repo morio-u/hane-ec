@@ -23,13 +23,13 @@ def view_cart(
     else:
         cart = {}
 
-    grand_total = 0
+    subtotal_amount = 0
     for product in cart.values():
-        grand_total += product["total"]
+        subtotal_amount += product["total"]
 
     response = templates.TemplateResponse(
         "cart.html",
-        {"request": request, "user": user, "cart": cart, "grand_total": grand_total}
+        {"request": request, "user": user, "cart": cart, "subtotal_amount": subtotal_amount}
     )
     response.set_cookie(
         key="cart",

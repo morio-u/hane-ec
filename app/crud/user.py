@@ -44,7 +44,6 @@ def create_user(
 
     new_user = User(
         last_name=last_name,
-        middle_name=middle_name,
         first_name=first_name,
         gender=gender,
         phone_number=cleaned_pn,

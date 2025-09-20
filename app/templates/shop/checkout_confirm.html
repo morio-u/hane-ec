@@ -1,0 +1,55 @@
+{% extends "base_shop.html" %}
+
+{% block content %}
+<div id="fh5co-checkout-confirm">
+    <div class="container">
+        <div class="row animate-box">
+            <div class="col-md-8 col-md-offset-2 text-center fh5co-heading">
+                <h2>Confirm Your Order</h2>
+                <p>Please check the details below before completing your purchase.</p>
+            </div>
+        </div>
+
+        <div class="row animate-box">
+            <div class="col-md-8 col-md-offset-2 col-xs-12">
+
+                <!-- Customer Info -->
+                <h3>Customer Information</h3>
+                <table class="table table-bordered">
+                    <tr><th>Name</th><td>{{ order.shipping_last_name }} {{ order.shipping_first_name }}</td></tr>
+                    <tr><th>Address</th><td>
+                        {{ order.shipping_address_line1 }}<br>
+                        {% if order.shipping_address_line2 %}{{ order.shipping_address_line2 }}<br>{% endif %}
+                        {{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_zip }}
+                    </td></tr>
+                    <tr><th>Phone</th><td>{{ order.shipping_phone_number }}</td></tr>
+                </table>
+
+                <!-- Shipping -->
+                <h3>Shipping Method</h3>
+                <p>{{ order.shipping_method|capitalize }}</p>
+
+                <!-- Payment -->
+                <h3>Payment Method</h3>
+                <p>{{ order.payment_method|replace("_", " ")|title }}</p>
+                <p>
+                    Card ending with ****{{ order.card_number[-4:] }}<br>
+                    Cardholder: {{ order.card_name }}
+                </p>
+
+                <!-- Buttons -->
+                <form action="/checkout/complete" method="post">
+                    {% for key, value in order.items() %}
+                        <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endfor %}
+                    <div class="form-group text-center">
+                        <button type="submit" class="btn btn-success">Confirm and Place Order</button>
+                        <a href="/checkout" class="btn btn-default">Back to Edit</a>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
