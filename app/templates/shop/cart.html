@@ -4,7 +4,7 @@
 <div id="fh5co-cart">
     <div class="container">
         <h3 class="text-center">Your Cart</h3>
-        {% if cart and cart|length > 0 %}
+        {% if cart_summary and cart_summary|length > 0 %}
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -17,26 +17,26 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for pid, product in cart.items() %}
+                    {% for item in cart_summary %}
                     <tr>
                         <td>
                             <img src="{{ url_for('static', path='images/products/product-1.jpg') }}" 
-                                 alt="{{ product.name }}" style="width:80px; height:auto;">
+                                 alt="{{ item.name }}" style="width:80px; height:auto;">
                         </td>
-                        <td>{{ product.name }}</td>
-                        <td>${{ "%.2f"|format(product.price) }}</td>
+                        <td>{{ item.name }}</td>
+                        <td>${{ "%.2f"|format(item.price) }}</td>
                         <td>
                             <!-- update quantity -->
-                            <form action="/cart/update/{{ pid }}" method="post" style="display:flex; align-items:center;">
-                                <input type="number" name="quantity" value="{{ product.quantity }}" 
+                            <form action="/cart/update/{{ item.sku_id }}" method="post" style="display:flex; align-items:center;">
+                                <input type="number" name="quantity" value="{{ item.quantity }}" 
                                        min="0" class="form-control form-control-sm" style="width:70px;">
                                 <button type="submit" class="btn btn-primary btn-sm ml-2">Update</button>
                             </form>
                         </td>
-                        <td>${{ "%.2f"|format(product.total) }}</td>
+                        <td>${{ "%.2f"|format(item.total) }}</td>
                         <td>
                             <!-- remove -->
-                            <form action="/cart/remove/{{ pid }}" method="post">
+                            <form action="/cart/remove/{{ item.sku_id }}" method="post">
                                 <button type="submit" class="btn btn-danger btn-sm">Remove</button>
                             </form>
                         </td>

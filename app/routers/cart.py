@@ -1,9 +1,10 @@
 import json
 import uuid
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from fastapi import APIRouter, HTTPException, Request, Response, Cookie, Depends, Form
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
+from app.core.config import settings
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models import Cart, CartItem, Sku
@@ -15,31 +16,55 @@ templates = Jinja2Templates(directory="app/templates/shop")
 def view_cart(
     request: Request,
     response: Response,
+    session_token: str = Cookie(None),
+    db: Session = Depends(get_db),
     user=Depends(get_current_user)
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-    cart_cookie = request.cookies.get("cart")
-    if cart_cookie:
-        try:
-            cart = json.loads(cart_cookie)
-        except json.JSONDecodeError:
-            cart = {}
+    cart_query = db.query(Cart)
+    if user and user.id:
+        cart_query = cart_query.filter(Cart.user_id == user.id)
+    elif session_token:
+        cart_query = cart_query.filter(Cart.session_token == session_token)
     else:
-        cart = {}
+        session_token = str(uuid.uuid4())
+        cart_query = cart_query.filter(Cart.session_token == session_token)
+    cart = (
+        cart_query
+        .options(
+            joinedload(Cart.cart_items)
+            .joinedload(CartItem.sku)
+            .joinedload(Sku.product)
+        )
+        .first()
+    )
 
+    cart_summary = []
     subtotal_amount = 0
-    for product in cart.values():
-        subtotal_amount += product["total"]
+    if cart:
+        for item in cart.cart_items:
+            cart_summary.append({
+                "sku_id": item.sku.id,
+                "sku": item.sku.barcode,
+                "name": item.sku.product.name,
+                "price": item.sku.product.price_excluding_tax,
+                "quantity": item.quantity,
+                "total": item.sku.product.price_excluding_tax * item.quantity,
+            })
+        subtotal_amount = sum(
+            item.sku.product.price_excluding_tax * item.quantity
+            for item in cart.cart_items
+        )
 
     response = templates.TemplateResponse(
         "cart.html",
-        {"request": request, "user": user, "cart": cart, "subtotal_amount": subtotal_amount}
+        {"request": request, "user": user, "cart_summary": cart_summary, "subtotal_amount": subtotal_amount}
     )
     response.set_cookie(
-        key="cart",
-        value=json.dumps(cart),
+        key="session_token",
+        value=session_token,
         httponly=True,
-        samesite="lax"
+        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS
     )
     return response
 
@@ -65,8 +90,8 @@ def add_to_cart(
     else:
         session_token = str(uuid.uuid4())
         cart_query = cart_query.filter(Cart.session_token == session_token)
-
     cart = cart_query.first()
+
     if not cart:
         try:
             cart = Cart(
@@ -80,55 +105,74 @@ def add_to_cart(
             raise e
 
     cart_item = db.query(CartItem).filter(CartItem.cart_id == Cart.id, CartItem.sku_id == sku_id).first()
+    try:
+        if cart_item:
+            cart_item.quantity += quantity
+        else:
+            cart_item = CartItem(
+                cart_id = cart.id,
+                sku_id = sku_id,
+                quantity = quantity
+            )
+            db.add(cart_item)
+        db.commit()
+        db.refresh(cart_item)
+    except Exception as e:
+        raise e
 
-    if cart_item:
-        cart_item.quantity += quantity
-    else:
-        cart_item = CartItem(
-            cart_id = cart.id,
-            sku_id = sku_id,
-            quantity = quantity
-        )
-        db.add(cart_item)
-    db.commit()
-    db.refresh(cart_item)
-
-    # Grand_total is calculated by "view_cart" function
     response = RedirectResponse(url="/cart", status_code=303)
     response.set_cookie(
         key="session_token",
         value=session_token,
         httponly=True,
-        max_age=60*60*24*30
+        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS
     )
     return response
 
-@router.post("/remove/{product_id}")
+@router.post("/remove/{sku_id}")
 def remove_from_cart(
-    request: Request,
     response: Response,
-    product_id: int
+    sku_id: int,
+    session_token: str = Cookie(None),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user)
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-    cart_cookie = request.cookies.get("cart")
-    if cart_cookie:
-        try:
-            cart = json.loads(cart_cookie)
-        except json.JSONDecodeError:
-            cart = {}
+    cart_query = db.query(Cart)
+    if user and user.id:
+        cart_query = cart_query.filter(Cart.user_id == user.id)
+    elif session_token:
+        cart_query = cart_query.filter(Cart.session_token == session_token)
     else:
-        cart = {}
+        session_token = str(uuid.uuid4())
+        cart_query = cart_query.filter(Cart.session_token == session_token)
 
-    pid = str(product_id)
-    if pid in cart:
-        del cart[pid]
+    cart = cart_query.first()
+    if not cart:
+        raise HTTPException(status_code=404, detail="Cart not found")
+
+    cart_items_to_remove = (
+        db.query(CartItem)
+        .filter(CartItem.cart_id == cart.id, CartItem.sku_id == sku_id)
+        .all()
+    )
+
+    if not cart_items_to_remove:
+        raise HTTPException(status_code=404, detail="Cart items not found")
+
+    try:
+        for item in cart_items_to_remove:
+            db.delete(item)
+        db.commit()
+    except Exception as e:
+        raise e
 
     response = RedirectResponse(url="/cart", status_code=303)
     response.set_cookie(
-        key="cart",
-        value=json.dumps(cart),
+        key="session_token",
+        value=session_token,
         httponly=True,
-        samesite="lax"
+        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS
     )
     return response
 

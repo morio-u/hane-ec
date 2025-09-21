@@ -9,10 +9,11 @@ class Settings(BaseSettings):
     DB_PORT: int
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    SESSION_TOKEN_EXPIRE_SECONDS: int
     DEBUG: bool = False
     TOKEN_TYPE: str = "bearer"
-
+    
     class Config:
         env_file = ".env"
 
