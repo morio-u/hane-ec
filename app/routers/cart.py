@@ -1,10 +1,9 @@
-import json
-import uuid
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from fastapi import APIRouter, HTTPException, Request, Response, Cookie, Depends, Form
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.core.config import settings
+from app.crud.cart import get_user_cart, get_user_cart_with_items_and_skus, generate_session_token
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models import Cart, CartItem, Sku
@@ -21,28 +20,21 @@ def view_cart(
     user=Depends(get_current_user)
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-    cart_query = db.query(Cart)
-    if user and user.id:
-        cart_query = cart_query.filter(Cart.user_id == user.id)
-    elif session_token:
-        cart_query = cart_query.filter(Cart.session_token == session_token)
-    else:
-        session_token = str(uuid.uuid4())
-        cart_query = cart_query.filter(Cart.session_token == session_token)
-    cart = (
-        cart_query
-        .options(
-            joinedload(Cart.cart_items)
-            .joinedload(CartItem.sku)
-            .joinedload(Sku.product)
-        )
-        .first()
-    )
+    if session_token is None:
+        session_token = generate_session_token()
+
+    # Retrieves the current user's cart with cart_items and skus.
+    # Returns None if no matching cart is found.
+    cart = get_user_cart_with_items_and_skus(db, user, session_token)
+
+    if cart is None:
+        raise HTTPException(status_code=404, detail="Cart not found")
 
     cart_summary = []
     subtotal_amount = 0
     if cart:
         for item in cart.cart_items:
+            # Organize cart data for display on the screen
             cart_summary.append({
                 "sku_id": item.sku.id,
                 "sku": item.sku.barcode,
@@ -82,17 +74,14 @@ def add_to_cart(
     if not skus:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    cart_query = db.query(Cart)
-    if user and user.id:
-        cart_query = cart_query.filter(Cart.user_id == user.id)
-    elif session_token:
-        cart_query = cart_query.filter(Cart.session_token == session_token)
-    else:
-        session_token = str(uuid.uuid4())
-        cart_query = cart_query.filter(Cart.session_token == session_token)
-    cart = cart_query.first()
+    if session_token is None:
+        session_token = generate_session_token()
 
-    if not cart:
+    # Retrieve the cart information for the specified user. 
+    # Returns None if no matching cart is found.
+    cart = get_user_cart(db, user, session_token)
+
+    if cart is None:
         try:
             cart = Cart(
                 user_id = user.id if user else None,
@@ -104,7 +93,8 @@ def add_to_cart(
         except Exception as e:
             raise e
 
-    cart_item = db.query(CartItem).filter(CartItem.cart_id == Cart.id, CartItem.sku_id == sku_id).first()
+    cart_item = db.query(CartItem).filter(CartItem.cart_id == cart.id, CartItem.sku_id == sku_id).first()
+
     try:
         if cart_item:
             cart_item.quantity += quantity
@@ -129,6 +119,49 @@ def add_to_cart(
     )
     return response
 
+@router.post("/update/{sku_id}")
+def update_cart(
+    response: Response,
+    sku_id: int,
+    quantity: int = Form(...),
+    session_token: str = Cookie(None),
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user)
+):
+    # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
+    if session_token is None:
+        session_token = generate_session_token()
+
+    # Retrieve the cart information for the specified user. 
+    # Returns None if no matching cart is found.
+    cart = get_user_cart(db, user, session_token)
+
+    if cart is None:
+        raise HTTPException(status_code=404, detail="Cart not found")
+
+    cart_item = db.query(CartItem).filter(CartItem.cart_id == cart.id, CartItem.sku_id == sku_id).first()
+
+    if cart_item is None:
+        raise HTTPException(status_code=404, detail="Cart item not found")
+
+    try:
+        if cart_item:
+            cart_item.quantity = quantity
+        db.add(cart_item)
+        db.commit()
+        db.refresh(cart_item)
+    except Exception as e:
+        raise e
+
+    response = RedirectResponse(url="/cart", status_code=303)
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS
+    )
+    return response
+
 @router.post("/remove/{sku_id}")
 def remove_from_cart(
     response: Response,
@@ -138,17 +171,14 @@ def remove_from_cart(
     user=Depends(get_current_user)
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-    cart_query = db.query(Cart)
-    if user and user.id:
-        cart_query = cart_query.filter(Cart.user_id == user.id)
-    elif session_token:
-        cart_query = cart_query.filter(Cart.session_token == session_token)
-    else:
-        session_token = str(uuid.uuid4())
-        cart_query = cart_query.filter(Cart.session_token == session_token)
+    if session_token is None:
+        session_token = generate_session_token()
 
-    cart = cart_query.first()
-    if not cart:
+    # Retrieve the cart information for the specified user. 
+    # Returns None if no matching cart is found.
+    cart = get_user_cart(db, user, session_token)
+
+    if cart is None:
         raise HTTPException(status_code=404, detail="Cart not found")
 
     cart_items_to_remove = (
@@ -173,36 +203,5 @@ def remove_from_cart(
         value=session_token,
         httponly=True,
         max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS
-    )
-    return response
-
-@router.post("/update/{product_id}")
-def update_cart(
-    request: Request,
-    response: Response,
-    product_id: int,
-    quantity: int = Form(...)
-):
-    # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-    cart_cookie = request.cookies.get("cart")
-    if cart_cookie:
-        try:
-            cart = json.loads(cart_cookie)
-        except json.JSONDecodeError:
-            cart = {}
-    else:
-        cart = {}
-
-    pid = str(product_id)
-    if pid in cart:
-        cart[pid]["quantity"] = quantity
-        cart[pid]["total"] = cart[pid]["quantity"] * cart[pid]["price"]
-
-    response = RedirectResponse(url="/cart", status_code=303)
-    response.set_cookie(
-        key="cart",
-        value=json.dumps(cart),
-        httponly=True,
-        samesite="lax"
     )
     return response
