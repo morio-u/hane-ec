@@ -12,7 +12,7 @@
                         <th style="width: 30%;">Product</th>
                         <th style="width: 15%;">Price</th>
                         <th style="width: 15%;">Quantity</th>
-                        <th style="width: 15%;">Total</th>
+                        <th style="width: 15%;">Subtotal</th>
                         <th style="width: 15%;">Action</th>
                     </tr>
                 </thead>
@@ -47,13 +47,11 @@
 
             <div class="text-right">
                 <h4>
-                    Grand Total: $
+                    Total: $
                     {{ "%.2f"|format(subtotal_amount) }}
-                    (tax calculated at checkout)
+                    (tax/shipping at checkout)
                 </h4>
-                <form action="/checkout" method="post">
-                    <input type="hidden" name="subtotal_amount" value="{{ subtotal_amount }}">
-                    <!-- 必要に応じて cart_id や item 数なども hidden に -->
+                <form action="/checkout" method="get">
                     <button type="submit" class="btn btn-success">
                         <i class="icon-credit-card"></i> Proceed to Checkout
                     </button>

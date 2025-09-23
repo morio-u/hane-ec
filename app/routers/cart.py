@@ -47,7 +47,8 @@ def view_cart(
                     "name": cart_item.sku.product.name,
                     "price": cart_item.sku.product.price_excluding_tax,
                     "quantity": cart_item.quantity,
-                    "total": cart_item.sku.product.price_excluding_tax * cart_item.quantity,
+                    "total": cart_item.sku.product.price_excluding_tax
+                    * cart_item.quantity,
                 }
             )
         subtotal_amount = sum(

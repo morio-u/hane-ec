@@ -1,20 +1,28 @@
+DC = docker compose
+
 up:
-	docker compose up -d
+	$(DC) up -d
 
 build:
-	docker compose build
+	$(DC) build
 
 down:
-	docker compose down $(if $(V),--volumes)
+	$(DC) down
+
+down-vol:
+	$(DC) down --volumes
+
+start:
+	$(DC) start
 
 stop:
-	docker compose stop
+	$(DC) stop
 
 logs:
-	docker compose logs -f web
+	$(DC) logs -f web
 
 bash:
-	docker compose exec web bash
+	$(DC) exec web bash
 
 ps:
-	docker compose ps
+	$(DC) ps
