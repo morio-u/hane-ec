@@ -3,7 +3,10 @@ import uuid
 from sqlalchemy.orm import Session, joinedload
 from app.models import Cart, CartItem, Sku, User
 
-def get_cart_query(db: Session, user: Optional[User] = None, session_token: Optional[str] = None) -> Optional[Cart]:
+
+def get_cart_query(
+    db: Session, user: Optional[User] = None, session_token: Optional[str] = None
+) -> Optional[Cart]:
     """
     Builds a base query to retrieve a cart filtered by user ID or session token.
 
@@ -26,7 +29,10 @@ def get_cart_query(db: Session, user: Optional[User] = None, session_token: Opti
 
     return cart_query
 
-def get_user_cart(db: Session, user: Optional[User] = None, session_token: Optional[str] = None) -> Optional[Cart]:
+
+def get_user_cart(
+    db: Session, user: Optional[User] = None, session_token: Optional[str] = None
+) -> Optional[Cart]:
     """
     Builds a base query to retrieve a cart filtered by user ID or session token.
 
@@ -47,7 +53,10 @@ def get_user_cart(db: Session, user: Optional[User] = None, session_token: Optio
 
     return cart
 
-def get_user_cart_with_items_and_skus(db: Session, user: Optional[User] = None, session_token: Optional[str] = None) -> Optional[Cart]:
+
+def get_user_cart_with_items_and_skus(
+    db: Session, user: Optional[User] = None, session_token: Optional[str] = None
+) -> Optional[Cart]:
     """
     Retrieves a cart along with its items, SKUs, and associated products.
 
@@ -64,17 +73,12 @@ def get_user_cart_with_items_and_skus(db: Session, user: Optional[User] = None, 
     if cart_query is None:
         return None
 
-    cart = (
-        cart_query
-        .options(
-            joinedload(Cart.cart_items)
-            .joinedload(CartItem.sku)
-            .joinedload(Sku.product)
-        )
-        .first()
-    )
+    cart = cart_query.options(
+        joinedload(Cart.cart_items).joinedload(CartItem.sku).joinedload(Sku.product)
+    ).first()
 
     return cart
+
 
 def generate_session_token() -> str:
     """

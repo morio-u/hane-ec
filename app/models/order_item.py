@@ -1,7 +1,16 @@
-from sqlalchemy import Column, Integer, BigInteger, String, DECIMAL, TIMESTAMP, ForeignKey
+from sqlalchemy import (
+    Column,
+    Integer,
+    BigInteger,
+    String,
+    DECIMAL,
+    TIMESTAMP,
+    ForeignKey,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
+
 
 class OrderItem(Base):
     __tablename__ = "order_items"
@@ -14,7 +23,9 @@ class OrderItem(Base):
     quantity = Column(Integer, nullable=False)
     subtotal_amount = Column(DECIMAL(12, 2), nullable=False)
     created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
-    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now(), nullable=False)
+    updated_at = Column(
+        TIMESTAMP, server_default=func.now(), onupdate=func.now(), nullable=False
+    )
 
     order = relationship("Order", back_populates="order_items")
     sku = relationship("Sku", back_populates="order_items")

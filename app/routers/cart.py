@@ -3,7 +3,11 @@ from fastapi import APIRouter, HTTPException, Request, Response, Cookie, Depends
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.core.config import settings
-from app.crud.cart import get_user_cart, get_user_cart_with_items_and_skus, generate_session_token
+from app.crud.cart import (
+    get_user_cart,
+    get_user_cart_with_items_and_skus,
+    generate_session_token,
+)
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models import Cart, CartItem, Sku
@@ -11,13 +15,14 @@ from app.models import Cart, CartItem, Sku
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")
 
+
 @router.get("")
 def view_cart(
     request: Request,
     response: Response,
     session_token: str = Cookie(None),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
     if session_token is None:
@@ -35,14 +40,16 @@ def view_cart(
     if cart:
         for item in cart.cart_items:
             # Organize cart data for display on the screen
-            cart_summary.append({
-                "sku_id": item.sku.id,
-                "sku": item.sku.barcode,
-                "name": item.sku.product.name,
-                "price": item.sku.product.price_excluding_tax,
-                "quantity": item.quantity,
-                "total": item.sku.product.price_excluding_tax * item.quantity,
-            })
+            cart_summary.append(
+                {
+                    "sku_id": item.sku.id,
+                    "sku": item.sku.barcode,
+                    "name": item.sku.product.name,
+                    "price": item.sku.product.price_excluding_tax,
+                    "quantity": item.quantity,
+                    "total": item.sku.product.price_excluding_tax * item.quantity,
+                }
+            )
         subtotal_amount = sum(
             item.sku.product.price_excluding_tax * item.quantity
             for item in cart.cart_items
@@ -50,15 +57,21 @@ def view_cart(
 
     response = templates.TemplateResponse(
         "cart.html",
-        {"request": request, "user": user, "cart_summary": cart_summary, "subtotal_amount": subtotal_amount}
+        {
+            "request": request,
+            "user": user,
+            "cart_summary": cart_summary,
+            "subtotal_amount": subtotal_amount,
+        },
     )
     response.set_cookie(
         key="session_token",
         value=session_token,
         httponly=True,
-        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS
+        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS,
     )
     return response
+
 
 @router.post("/add")
 def add_to_cart(
@@ -67,7 +80,7 @@ def add_to_cart(
     quantity: int = Form(...),
     session_token: str = Cookie(None),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
     skus = db.query(Sku).filter(Sku.id == sku_id).all()
@@ -77,33 +90,30 @@ def add_to_cart(
     if session_token is None:
         session_token = generate_session_token()
 
-    # Retrieve the cart information for the specified user. 
+    # Retrieve the cart information for the specified user.
     # Returns None if no matching cart is found.
     cart = get_user_cart(db, user, session_token)
 
     if cart is None:
         try:
-            cart = Cart(
-                user_id = user.id if user else None,
-                session_token = session_token
-            )
+            cart = Cart(user_id=user.id if user else None, session_token=session_token)
             db.add(cart)
             db.commit()
             db.refresh(cart)
         except Exception as e:
             raise e
 
-    cart_item = db.query(CartItem).filter(CartItem.cart_id == cart.id, CartItem.sku_id == sku_id).first()
+    cart_item = (
+        db.query(CartItem)
+        .filter(CartItem.cart_id == cart.id, CartItem.sku_id == sku_id)
+        .first()
+    )
 
     try:
         if cart_item:
             cart_item.quantity += quantity
         else:
-            cart_item = CartItem(
-                cart_id = cart.id,
-                sku_id = sku_id,
-                quantity = quantity
-            )
+            cart_item = CartItem(cart_id=cart.id, sku_id=sku_id, quantity=quantity)
             db.add(cart_item)
         db.commit()
         db.refresh(cart_item)
@@ -115,9 +125,10 @@ def add_to_cart(
         key="session_token",
         value=session_token,
         httponly=True,
-        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS
+        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS,
     )
     return response
+
 
 @router.post("/update/{sku_id}")
 def update_cart(
@@ -126,20 +137,24 @@ def update_cart(
     quantity: int = Form(...),
     session_token: str = Cookie(None),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
     if session_token is None:
         session_token = generate_session_token()
 
-    # Retrieve the cart information for the specified user. 
+    # Retrieve the cart information for the specified user.
     # Returns None if no matching cart is found.
     cart = get_user_cart(db, user, session_token)
 
     if cart is None:
         raise HTTPException(status_code=404, detail="Cart not found")
 
-    cart_item = db.query(CartItem).filter(CartItem.cart_id == cart.id, CartItem.sku_id == sku_id).first()
+    cart_item = (
+        db.query(CartItem)
+        .filter(CartItem.cart_id == cart.id, CartItem.sku_id == sku_id)
+        .first()
+    )
 
     if cart_item is None:
         raise HTTPException(status_code=404, detail="Cart item not found")
@@ -158,9 +173,10 @@ def update_cart(
         key="session_token",
         value=session_token,
         httponly=True,
-        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS
+        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS,
     )
     return response
+
 
 @router.post("/remove/{sku_id}")
 def remove_from_cart(
@@ -168,13 +184,13 @@ def remove_from_cart(
     sku_id: int,
     session_token: str = Cookie(None),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
     if session_token is None:
         session_token = generate_session_token()
 
-    # Retrieve the cart information for the specified user. 
+    # Retrieve the cart information for the specified user.
     # Returns None if no matching cart is found.
     cart = get_user_cart(db, user, session_token)
 
@@ -202,6 +218,6 @@ def remove_from_cart(
         key="session_token",
         value=session_token,
         httponly=True,
-        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS
+        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS,
     )
     return response

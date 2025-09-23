@@ -6,6 +6,7 @@ from app.models.brand import Brand
 from app.models.product import Product, PurchaseTypeEnum, ProductStatusEnum
 from app.models.sku import Sku, SkuStatusEnum
 
+
 def seed_departments(db):
     departments = [
         Department(id=1, name="Electronics"),
@@ -13,12 +14,14 @@ def seed_departments(db):
     db.add_all(departments)
     db.commit()
 
+
 def seed_categories(db):
     categories = [
         Category(id=1, department_id=1, name="Wearables"),
     ]
     db.add_all(categories)
     db.commit()
+
 
 def seed_subcategories(db):
     subcategories = [
@@ -36,6 +39,7 @@ def seed_brands(db):
     ]
     db.add_all(brands)
     db.commit()
+
 
 def seed_products(db):
     products = [
@@ -67,6 +71,7 @@ def seed_products(db):
 
     db.add_all(products)
     db.commit()
+
 
 def seed_skus(db):
     products = db.query(Product).all()
@@ -101,6 +106,7 @@ def seed_skus(db):
     db.add_all(sample_skus)
     db.commit()
 
+
 def seed_all():
     db = SessionLocal()
     try:
@@ -112,6 +118,7 @@ def seed_all():
         seed_skus(db)
     finally:
         db.close()
+
 
 if __name__ == "__main__":
     seed_all()

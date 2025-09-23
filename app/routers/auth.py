@@ -14,19 +14,19 @@ from app.schemas.user import UserCreate
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")
 
+
 @router.get("/login", response_class=HTMLResponse)
 def read_login_form(request: Request):
-    return templates.TemplateResponse(
-        "login.html", {"request": request}
-    )
+    return templates.TemplateResponse("login.html", {"request": request})
+
 
 @router.post("/login", name="login")
 def login(
-        db: Session = Depends(get_db),
-        # TODO: Move to OAuth2PasswordRequestLoginForm
-        email: str = Form(...),
-        password: str = Form(...)
-    ) -> Dict[str, str]:
+    db: Session = Depends(get_db),
+    # TODO: Move to OAuth2PasswordRequestLoginForm
+    email: str = Form(...),
+    password: str = Form(...),
+) -> Dict[str, str]:
     """
     Login Processing
     Receives form_data.email / form_data.password,
@@ -50,9 +50,10 @@ def login(
         value=access_token,
         httponly=True,
         max_age=60 * 60,
-        samesite="lax"
+        samesite="lax",
     )
     return redirect
+
 
 @router.get("/logout")
 def logout():
@@ -60,25 +61,25 @@ def logout():
     redirect.delete_cookie(key="access_token")
     return redirect
 
+
 @router.get("/signup", response_class=HTMLResponse)
 def read_signup_form(request: Request):
-    return templates.TemplateResponse(
-        "signup.html", {"request": request}
-    )
+    return templates.TemplateResponse("signup.html", {"request": request})
+
 
 @router.post("/signup")
 def signup(
-        db: Session = Depends(get_db),
-        # TODO: Move to UserCreate
-        last_name: str = Form(...),
-        first_name: str = Form(...),
-        gender: int = Form(...),
-        phone_number: str = Form(...),
-        email: str = Form(...),
-        password: str = Form(...),
-        confirm_password: str = Form(...),
-        is_send_newsletter: bool = Form(False)
-    ):
+    db: Session = Depends(get_db),
+    # TODO: Move to UserCreate
+    last_name: str = Form(...),
+    first_name: str = Form(...),
+    gender: int = Form(...),
+    phone_number: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    confirm_password: str = Form(...),
+    is_send_newsletter: bool = Form(False),
+):
     if password != confirm_password:
         raise HTTPException(status_code=400, detail="Passwords do not match")
 
@@ -96,7 +97,7 @@ def signup(
         phone_number,
         email,
         password,
-        is_send_newsletter
+        is_send_newsletter,
     )
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -110,6 +111,6 @@ def signup(
         value=access_token,
         httponly=True,
         max_age=60 * 60,
-        samesite="lax"
+        samesite="lax",
     )
     return redirect

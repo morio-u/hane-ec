@@ -10,16 +10,16 @@ from app.models.order import Order
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")
 
+
 @router.post("", response_class=HTMLResponse)
 def view_checkout_form(
-    request: Request,
-    subtotal_amount: float = Form(...),
-    user=Depends(get_current_user)
+    request: Request, subtotal_amount: float = Form(...), user=Depends(get_current_user)
 ):
     return templates.TemplateResponse(
         "checkout_form.html",
-        {"request": request, "user": user, "subtotal_amount": subtotal_amount}
+        {"request": request, "user": user, "subtotal_amount": subtotal_amount},
     )
+
 
 @router.post("/confirm", response_class=HTMLResponse)
 async def checkout_confirm(
@@ -38,7 +38,7 @@ async def checkout_confirm(
     card_number: str = Form(...),
     card_name: str = Form(...),
     card_cvv: str = Form(...),
-    user=Depends(get_current_user)
+    user=Depends(get_current_user),
 ):
     # TODO: Add validation
     order_data = {
@@ -57,7 +57,10 @@ async def checkout_confirm(
         "card_name": card_name,
         "card_cvv": card_cvv,
     }
-    return templates.TemplateResponse("checkout_confirm.html", {"request": request, "order": order_data, "user": user})
+    return templates.TemplateResponse(
+        "checkout_confirm.html", {"request": request, "order": order_data, "user": user}
+    )
+
 
 @router.post("/complete", name="checkout_complete", response_class=HTMLResponse)
 def checkout_complete(
@@ -77,7 +80,7 @@ def checkout_complete(
     card_name: str = Form(...),
     card_cvv: str = Form(...),
     subtotal_amount: float = Form(...),
-    user = Depends(get_current_user)
+    user=Depends(get_current_user),
 ):
     """
     1. フォームデータ受け取り
@@ -107,25 +110,18 @@ def checkout_complete(
     # TODO: カート情報を order_items に保存
     # 今は仮で 1 商品だけ保存
     order_item = OrderItem(
-        order_id=new_order.id,
-        product_id=1,  # 仮
-        quantity=1,
-        price=1000
+        order_id=new_order.id, product_id=1, quantity=1, price=1000  # 仮
     )
     db.add(order_item)
 
     # 決済情報
     payment = Payment(
-        order_id=new_order.id,
-        amount=1000,
-        method=payment_method,
-        status="authorized"
+        order_id=new_order.id, amount=1000, method=payment_method, status="authorized"
     )
     db.add(payment)
 
     db.commit()
 
     return templates.TemplateResponse(
-        "checkout_complete.html",
-        {"request": request, "order": new_order}
+        "checkout_complete.html", {"request": request, "order": new_order}
     )
