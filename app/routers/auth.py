@@ -8,8 +8,6 @@ from app.core.jwt import create_access_token
 from app.core.config import settings
 from app.crud.user import get_user_by_email, create_user, authenticate_user
 from app.database import get_db
-from app.schemas.auth import OAuth2PasswordRequestLoginForm
-from app.schemas.user import UserCreate
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")

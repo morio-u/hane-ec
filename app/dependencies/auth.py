@@ -1,5 +1,5 @@
 from jose import jwt, JWTError
-from fastapi import Request, status, HTTPException, Depends
+from fastapi import Request, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.database import get_db
