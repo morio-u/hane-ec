@@ -38,21 +38,21 @@ def view_cart(
     cart_summary = []
     subtotal_amount = 0
     if cart:
-        for item in cart.cart_items:
+        for cart_item in sorted(cart.cart_items, key=lambda cart_item: cart_item.id):
             # Organize cart data for display on the screen
             cart_summary.append(
                 {
-                    "sku_id": item.sku.id,
-                    "sku": item.sku.barcode,
-                    "name": item.sku.product.name,
-                    "price": item.sku.product.price_excluding_tax,
-                    "quantity": item.quantity,
-                    "total": item.sku.product.price_excluding_tax * item.quantity,
+                    "sku_id": cart_item.sku.id,
+                    "sku": cart_item.sku.barcode,
+                    "name": cart_item.sku.product.name,
+                    "price": cart_item.sku.product.price_excluding_tax,
+                    "quantity": cart_item.quantity,
+                    "total": cart_item.sku.product.price_excluding_tax * cart_item.quantity,
                 }
             )
         subtotal_amount = sum(
-            item.sku.product.price_excluding_tax * item.quantity
-            for item in cart.cart_items
+            cart_item.sku.product.price_excluding_tax * cart_item.quantity
+            for cart_item in cart.cart_items
         )
 
     response = templates.TemplateResponse(
