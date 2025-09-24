@@ -9,6 +9,7 @@ from app.crud.cart import (
 )
 from app.database import get_db
 from app.dependencies.auth import get_current_user
+from app.models import Order, OrderItem, Payment, OrderStatusEnum, PaymentStatusEnum, ShippingStatusEnum
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")
@@ -63,8 +64,8 @@ def checkout_confirm(
     # tax = get_tax()
     tax_per = Decimal("0.1")
     tax = subtotal_amount * tax_per
-    shipping_cost = Decimal("20.00")
-    total = subtotal_amount + shipping_cost + tax
+    shipping_fee = Decimal("20.00")
+    total = subtotal_amount + shipping_fee + tax
 
     order = {
         "shipping_last_name": shipping_last_name,
@@ -81,7 +82,7 @@ def checkout_confirm(
         "card_name": card_name,
         "card_cvv": card_cvv,
         "subtotal_amount": subtotal_amount,
-        "shipping_cost": shipping_cost,
+        "shipping_fee": shipping_fee,
         "tax": tax,
         "total": total,
     }
@@ -94,8 +95,121 @@ def checkout_confirm(
 @router.post("/complete", name="checkout_complete", response_class=HTMLResponse)
 def checkout_complete(
     request: Request,
+    shipping_last_name: str = Form(...),
+    shipping_first_name: str = Form(...),
+    shipping_address_line1: str = Form(...),
+    shipping_address_line2: str = Form(""),
+    shipping_city: str = Form(...),
+    shipping_state: str = Form(...),
+    shipping_zip: str = Form(...),
+    shipping_phone_number: str = Form(...),
+    shipping_method: str = Form(...),
+    payment_method: str = Form(...),
+    card_number: str = Form(...),
+    card_name: str = Form(...),
+    card_cvv: str = Form(...),
+    session_token: str = Cookie(None),
+    db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
+    # TODO: Add validation
+    if session_token is None:
+        session_token = generate_session_token()
+
+    # Retrieves the current user's cart with cart_items and skus.
+    # Returns None if no matching cart is found.
+    cart = get_user_cart_with_items_and_skus(db, user, session_token)
+
+    subtotal_amount = 0
+    if cart:
+        subtotal_amount = sum(
+            cart_item.sku.product.price_excluding_tax * cart_item.quantity
+            for cart_item in cart.cart_items
+        )
+    else:
+        raise HTTPException(status_code=404, detail="Cart not found")
+
+    # TODO: get target tax, use sample values temporally
+    # tax = get_tax()
+    tax_per = Decimal("0.1")
+    tax = subtotal_amount * tax_per
+    shipping_fee = Decimal("20.00")
+    payment_fee = Decimal("5.00")
+    total = subtotal_amount + shipping_fee + tax
+    order_status = OrderStatusEnum.confirmed
+    shipping_status = ShippingStatusEnum.preparing
+    payment_status = PaymentStatusEnum.unpaid
+
+    new_order = Order(
+        user_id=user.id,
+        shipping_last_name=shipping_last_name,
+        shipping_first_name=shipping_first_name,
+        shipping_address_line1=shipping_address_line1,
+        shipping_address_line2=shipping_address_line2,
+        shipping_city=shipping_city,
+        shipping_state=shipping_state,
+        shipping_zip=shipping_zip,
+        shipping_phone_number=shipping_phone_number,
+        subtotal_amount=subtotal_amount,
+        shipping_fee=shipping_fee,
+        payment_fee=payment_fee,
+        total_amount=total,
+        shipping_method=shipping_method,
+        order_status=order_status,
+        shipping_status=shipping_status,
+        payment_status=payment_status,
+    )
+
+    try:
+        db.add(new_order)
+        db.commit()
+        db.refresh(new_order)
+    except Exception as e:
+        db.rollback()
+        raise e
+
+    # TODO: get target tax, use sample values temporally
+    transaction_token = "0123456789"
+    card_brand = "SAMPLE_CARD"
+    last4 = card_number[-4:]
+
+
+    new_order_items = []
+    if new_order and new_order.id:
+        for cart_item in sorted(cart.cart_items, key=lambda cart_item: cart_item.id):
+            new_order_items.append(OrderItem(
+                order_id=new_order.id,
+                sku_id=cart_item.sku.id,
+                product_name=cart_item.sku.product.name,
+                unit_price=cart_item.sku.product.price_excluding_tax,
+                quantity=cart_item.quantity,
+                subtotal_amount=cart_item.sku.product.price_excluding_tax
+                * cart_item.quantity,
+            ))
+        try:
+            db.add_all(new_order_items)
+            db.commit()
+            for new_order_item in new_order_items:
+                db.refresh(new_order_item)
+        except Exception as e:
+            db.rollback()
+            raise e
+
+        new_payment = Payment(
+            user_id=user.id,
+            order_id=new_order.id,
+            payment_method=payment_method,
+            payment_status=payment_status,
+            transaction_token=transaction_token,
+            amount=total,
+        )
+        try:
+            db.add_all(new_payment)
+            db.commit()
+            db.refresh(new_payment)
+        except Exception as e:
+            db.rollback()
+            raise e
 
     return templates.TemplateResponse(
         "checkout_complete.html", {"request": request, "user": user}
