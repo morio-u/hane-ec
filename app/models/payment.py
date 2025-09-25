@@ -2,7 +2,6 @@ from sqlalchemy import (
     Column,
     Integer,
     String,
-    DECIMAL,
     TIMESTAMP,
     ForeignKey,
     Enum as SQLEnum,
@@ -33,10 +32,6 @@ class Payment(Base):
         SQLEnum(PaymentStatusEnum), default=PaymentStatusEnum.pending, nullable=False
     )
     transaction_token = Column(String(255), nullable=True)
-    card_brand = Column(String(50), nullable=True)
-    last4 = Column(String(4), nullable=True)
-    expiry_date = Column(String(10), nullable=True)
-    amount = Column(DECIMAL(12, 2), nullable=False)
     paid_at = Column(TIMESTAMP, nullable=True)
     created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
     updated_at = Column(

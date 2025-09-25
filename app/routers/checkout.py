@@ -9,7 +9,14 @@ from app.crud.cart import (
 )
 from app.database import get_db
 from app.dependencies.auth import get_current_user
-from app.models import Order, OrderItem, Payment, OrderStatusEnum, PaymentStatusEnum, ShippingStatusEnum
+from app.models import (
+    Order,
+    OrderItem,
+    Payment,
+    OrderStatusEnum,
+    PaymentStatusEnum,
+    ShippingStatusEnum,
+)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")
@@ -173,19 +180,20 @@ def checkout_complete(
     card_brand = "SAMPLE_CARD"
     last4 = card_number[-4:]
 
-
     new_order_items = []
     if new_order and new_order.id:
         for cart_item in sorted(cart.cart_items, key=lambda cart_item: cart_item.id):
-            new_order_items.append(OrderItem(
-                order_id=new_order.id,
-                sku_id=cart_item.sku.id,
-                product_name=cart_item.sku.product.name,
-                unit_price=cart_item.sku.product.price_excluding_tax,
-                quantity=cart_item.quantity,
-                subtotal_amount=cart_item.sku.product.price_excluding_tax
-                * cart_item.quantity,
-            ))
+            new_order_items.append(
+                OrderItem(
+                    order_id=new_order.id,
+                    sku_id=cart_item.sku.id,
+                    product_name=cart_item.sku.product.name,
+                    unit_price=cart_item.sku.product.price_excluding_tax,
+                    quantity=cart_item.quantity,
+                    subtotal_amount=cart_item.sku.product.price_excluding_tax
+                    * cart_item.quantity,
+                )
+            )
         try:
             db.add_all(new_order_items)
             db.commit()

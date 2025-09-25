@@ -56,8 +56,9 @@ class Order(Base):
     shipping_zip = Column(String(10), nullable=False)
     shipping_phone_number = Column(String(15), nullable=False)
     subtotal_amount = Column(DECIMAL(12, 2), nullable=False, default=0)
+    tax_amount = Column(DECIMAL(12, 2), nullable=False, default=0)
     shipping_fee = Column(DECIMAL(12, 2), nullable=False, default=0)
-    payment_fee = Column(DECIMAL(12, 2), nullable=False, default=0)
+    payment_processing_fee = Column(DECIMAL(12, 2), nullable=False, default=0)
     total_amount = Column(DECIMAL(12, 2), nullable=False, default=0)
     shipping_method = Column(String(50), nullable=False)
     order_status = Column(

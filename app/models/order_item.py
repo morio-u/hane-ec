@@ -19,9 +19,11 @@ class OrderItem(Base):
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False, index=True)
     sku_id = Column(Integer, ForeignKey("skus.id"), nullable=False, index=True)
     product_name = Column(String(255), nullable=False)
-    unit_price = Column(DECIMAL(12, 2), nullable=False)
+    item_price = Column(DECIMAL(12, 2), nullable=False)
     quantity = Column(Integer, nullable=False)
-    subtotal_amount = Column(DECIMAL(12, 2), nullable=False)
+    item_total_amount = Column(DECIMAL(12, 2), nullable=False)
+    tax_rate = Column(DECIMAL(5, 2), nullable=False, default=0)
+    tax_amount = Column(DECIMAL(12, 2), nullable=False, default=0)
     created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
     updated_at = Column(
         TIMESTAMP, server_default=func.now(), onupdate=func.now(), nullable=False
