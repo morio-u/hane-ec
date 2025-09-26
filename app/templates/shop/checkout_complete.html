@@ -1,0 +1,28 @@
+{% extends "base_shop.html" %}
+
+{% block content %}
+<div id="fh5co-hero" class="js-fullheight" style="background-image: url('{{ url_for('static', path='images/img_bg_5.jpg') }}'); background-size: cover;">
+  <div class="overlay-gradient"></div>
+  <div class="container">
+    <div class="col-md-8 col-md-offset-2 text-center js-fullheight slider-text">
+      <div class="slider-text-inner">
+        <div class="desc animate-box">
+          <h2>Thank You for Your Purchase!</h2>
+          <p>Your order has been completed successfully.</p>
+          {% if order_id %}
+            <p><strong>Order ID:</strong> {{ order_id }}</p>
+          {% endif %}
+          {% if user %}
+            <p><strong>Name:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+          {% endif %}
+          <p>We have sent a confirmation email with the details of your order.</p>
+          <p>
+            <a href="/" class="btn btn-primary btn-outline btn-lg">Back to Home</a>
+            <a href="/" class="btn btn-default btn-lg">View Order History</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

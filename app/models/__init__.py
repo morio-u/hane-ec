@@ -11,8 +11,8 @@ from .image import Image
 from .shipping_rule import ShippingRule
 from .product_image import ProductImage
 from .address import Address
-from .order import Order
+from .order import Order, OrderStatusEnum, PaymentStatusEnum, ShippingStatusEnum
 from .order_item import OrderItem
-from .payment import Payment
+from .payment import Payment, PaymentStatusEnum
 from .cart import Cart
 from .cart_item import CartItem

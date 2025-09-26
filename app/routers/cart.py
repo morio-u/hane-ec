@@ -32,6 +32,7 @@ def view_cart(
     # Returns None if no matching cart is found.
     cart = get_user_cart_with_items_and_skus(db, user, session_token)
 
+    # TODO: Show empty cart
     if cart is None:
         raise HTTPException(status_code=404, detail="Cart not found")
 
