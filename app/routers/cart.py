@@ -32,10 +32,6 @@ def view_cart(
     # Returns None if no matching cart is found.
     cart = get_user_cart_with_items_and_skus(db, user, session_token)
 
-    # TODO: Show empty cart
-    if cart is None:
-        raise HTTPException(status_code=404, detail="Cart not found")
-
     cart_summary = []
     subtotal_amount = 0
     if cart:
@@ -142,6 +138,10 @@ def update_cart(
     user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
+    skus = db.query(Sku).filter(Sku.id == sku_id).all()
+    if not skus:
+        raise HTTPException(status_code=404, detail="Product not found")
+
     if session_token is None:
         session_token = generate_session_token()
 
@@ -189,6 +189,10 @@ def remove_from_cart(
     user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
+    skus = db.query(Sku).filter(Sku.id == sku_id).all()
+    if not skus:
+        raise HTTPException(status_code=404, detail="Product not found")
+
     if session_token is None:
         session_token = generate_session_token()
 
