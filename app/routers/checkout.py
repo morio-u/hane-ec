@@ -3,9 +3,10 @@ from sqlalchemy.orm import Session
 from fastapi import APIRouter, HTTPException, Request, Cookie, Depends, Form
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from app.utils.session import get_or_create_session_token
 from app.crud.cart import (
+    get_subtotal_amount,
     get_user_cart_with_items_and_skus,
-    generate_session_token,
 )
 from app.database import get_db
 from app.dependencies.auth import get_current_user
@@ -51,19 +52,15 @@ def checkout_confirm(
     user=Depends(get_current_user),
 ):
     # TODO: Add validation
-    if session_token is None:
-        session_token = generate_session_token()
+    session_token = get_or_create_session_token(session_token)
 
     # Retrieves the current user's cart with cart_items and skus.
     # Returns None if no matching cart is found.
     cart = get_user_cart_with_items_and_skus(db, user, session_token)
 
-    subtotal_amount = 0
     if cart:
-        subtotal_amount = sum(
-            cart_item.sku.product.price_excluding_tax * cart_item.quantity
-            for cart_item in cart.cart_items
-        )
+        # Calculate the subtotal amount of all items in the cart.
+        subtotal_amount = get_subtotal_amount(cart)
     else:
         raise HTTPException(status_code=404, detail="Cart not found")
 
@@ -117,19 +114,15 @@ def checkout_complete(
     user=Depends(get_current_user),
 ):
     # TODO: Add validation
-    if session_token is None:
-        session_token = generate_session_token()
+    session_token = get_or_create_session_token(session_token)
 
     # Retrieves the current user's cart with cart_items and skus.
     # Returns None if no matching cart is found.
     cart = get_user_cart_with_items_and_skus(db, user, session_token)
 
-    subtotal_amount = 0
     if cart:
-        subtotal_amount = sum(
-            cart_item.sku.product.price_excluding_tax * cart_item.quantity
-            for cart_item in cart.cart_items
-        )
+        # Calculate the subtotal amount of all items in the cart.
+        subtotal_amount = get_subtotal_amount(cart)
     else:
         raise HTTPException(status_code=404, detail="Cart not found")
 

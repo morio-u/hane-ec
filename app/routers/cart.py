@@ -3,11 +3,14 @@ from fastapi import APIRouter, HTTPException, Request, Response, Cookie, Depends
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.core.config import settings
+from app.utils.session import get_or_create_session_token
 from app.crud.cart import (
+    get_subtotal_amount,
     get_user_cart,
     get_user_cart_with_items_and_skus,
-    generate_session_token,
+    make_cart_summary,
 )
+from app.crud.sku import get_sku_by_id
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models import Cart, CartItem, Sku
@@ -25,33 +28,17 @@ def view_cart(
     user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-    if session_token is None:
-        session_token = generate_session_token()
+    session_token = get_or_create_session_token(session_token)
 
     # Retrieves the current user's cart with cart_items and skus.
     # Returns None if no matching cart is found.
     cart = get_user_cart_with_items_and_skus(db, user, session_token)
 
-    cart_summary = []
-    subtotal_amount = 0
-    if cart:
-        for cart_item in sorted(cart.cart_items, key=lambda cart_item: cart_item.id):
-            # Organize cart data for display on the screen
-            cart_summary.append(
-                {
-                    "sku_id": cart_item.sku.id,
-                    "sku": cart_item.sku.barcode,
-                    "name": cart_item.sku.product.name,
-                    "price": cart_item.sku.product.price_excluding_tax,
-                    "quantity": cart_item.quantity,
-                    "total": cart_item.sku.product.price_excluding_tax
-                    * cart_item.quantity,
-                }
-            )
-        subtotal_amount = sum(
-            cart_item.sku.product.price_excluding_tax * cart_item.quantity
-            for cart_item in cart.cart_items
-        )
+    # Convert cart items into a summary format for display.
+    cart_summary = make_cart_summary(cart)
+
+    # Calculate the subtotal amount of all items in the cart.
+    subtotal_amount = get_subtotal_amount(cart)
 
     response = templates.TemplateResponse(
         "cart.html",
@@ -81,12 +68,11 @@ def add_to_cart(
     user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-    skus = db.query(Sku).filter(Sku.id == sku_id).all()
-    if not skus:
+    sku = get_sku_by_id(sku_id, db)
+    if not sku:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    if session_token is None:
-        session_token = generate_session_token()
+    session_token = get_or_create_session_token(session_token)
 
     # Retrieve the cart information for the specified user.
     # Returns None if no matching cart is found.
@@ -138,12 +124,11 @@ def update_cart(
     user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-    skus = db.query(Sku).filter(Sku.id == sku_id).all()
-    if not skus:
+    sku = get_sku_by_id(sku_id, db)
+    if not sku:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    if session_token is None:
-        session_token = generate_session_token()
+    session_token = get_or_create_session_token(session_token)
 
     # Retrieve the cart information for the specified user.
     # Returns None if no matching cart is found.
@@ -189,12 +174,11 @@ def remove_from_cart(
     user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-    skus = db.query(Sku).filter(Sku.id == sku_id).all()
-    if not skus:
+    sku = get_sku_by_id(sku_id, db)
+    if not sku:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    if session_token is None:
-        session_token = generate_session_token()
+    session_token = get_or_create_session_token(session_token)
 
     # Retrieve the cart information for the specified user.
     # Returns None if no matching cart is found.
