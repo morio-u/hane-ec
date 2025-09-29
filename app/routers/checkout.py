@@ -188,7 +188,7 @@ def checkout_complete(
                     item_total_amount=cart_item.sku.product.price_excluding_tax
                     * cart_item.quantity,
                     tax_rate=tax_rate,
-                    tax_amount=tax_amount 
+                    tax_amount=tax_amount,
                 )
             )
         try:
@@ -217,5 +217,6 @@ def checkout_complete(
         db.delete(cart)
         db.commit()
     return templates.TemplateResponse(
-        "checkout_complete.html", {"request": request, "user": user, "order_id": new_order.id}
+        "checkout_complete.html",
+        {"request": request, "user": user, "order_id": new_order.id},
     )

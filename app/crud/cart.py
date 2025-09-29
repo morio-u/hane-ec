@@ -1,5 +1,6 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session, joinedload
+from fastapi import HTTPException
 from app.models import Cart, CartItem, Sku, User
 
 
@@ -102,8 +103,7 @@ def make_cart_summary(cart: Cart) -> List[dict]:
                 "name": cart_item.sku.product.name,
                 "price": cart_item.sku.product.price_excluding_tax,
                 "quantity": cart_item.quantity,
-                "total": cart_item.sku.product.price_excluding_tax
-                * cart_item.quantity,
+                "total": cart_item.sku.product.price_excluding_tax * cart_item.quantity,
             }
         )
 
@@ -127,3 +127,143 @@ def get_subtotal_amount(cart: Cart) -> float:
         cart_item.sku.product.price_excluding_tax * cart_item.quantity
         for cart_item in cart.cart_items
     )
+
+
+def get_cart_item_by_sku(cart_id: int, sku_id: int, db: Session) -> Optional[CartItem]:
+    """
+    Retrieve a specific cart item by cart ID and SKU ID.
+
+    Args:
+        db (Session): The database session.
+        cart_id (int): The ID of the cart.
+        sku_id (int): The ID of the SKU.
+
+    Returns:
+        Optional[CartItem]: The matching cart item if found, otherwise None.
+    """
+    if cart_id is None or sku_id is None:
+        return None
+
+    return (
+        db.query(CartItem)
+        .filter(CartItem.cart_id == cart_id, CartItem.sku_id == sku_id)
+        .first()
+    )
+
+
+def get_or_create_cart(
+    db: Session, user: Optional[User] = None, session_token: Optional[str] = None
+) -> Optional[Cart]:
+    """
+    Retrieve the cart for the specified user or session.
+    If no cart exists, create a new one.
+
+    Args:
+        db (Session): SQLAlchemy database session.
+        user (Optional[User]): The user object, if logged in.
+        session_token (Optional[str]): A unique token for guest users.
+
+    Returns:
+        Optional[Cart]: The retrieved or newly created cart.
+    """
+    cart = get_user_cart(db, user, session_token)
+
+    if cart is None:
+        try:
+            cart = Cart(user_id=user.id if user else None, session_token=session_token)
+            db.add(cart)
+            db.commit()
+            db.refresh(cart)
+        except Exception as e:
+            db.rollback()
+            raise e
+
+    return cart
+
+
+def create_or_increment_cart_item(
+    cart_id: int, sku_id: int, quantity: int, db: Session
+) -> Optional[CartItem]:
+    """
+    Create a new cart item or update the quantity of an existing one.
+
+    Args:
+        cart_id (int): The cart ID.
+        sku_id (int): The SKU ID.
+        quantity (int): The quantity to add to the cart item.
+        db (Session): The database session.
+
+    Returns:
+        CartItem: The created or updated cart item.
+    """
+    cart_item = get_cart_item_by_sku(cart_id, sku_id, db)
+
+    try:
+        if cart_item:
+            cart_item.quantity += quantity
+        else:
+            cart_item = CartItem(cart_id=cart_id, sku_id=sku_id, quantity=quantity)
+            db.add(cart_item)
+        db.commit()
+        db.refresh(cart_item)
+    except Exception as e:
+        db.rollback()
+        raise e
+
+    return cart_item
+
+
+def update_cart_item_quantity(
+    cart_id: int, sku_id: int, quantity: int, db: Session
+) -> CartItem:
+    """
+    Update the quantity of an existing cart item.
+
+    Args:
+        cart_id (int): The ID of the cart that contains the item.
+        sku_id (int): The ID of the SKU to be updated.
+        quantity (int): The new quantity to set.
+        db (Session): The database session.
+
+    Returns:
+        CartItem: The updated cart item.
+
+    Raises:
+        HTTPException or ValueError: If the cart item does not exist.
+    """
+    cart_item = get_cart_item_by_sku(cart_id, sku_id, db)
+
+    if cart_item is None:
+        raise HTTPException(status_code=404, detail="Cart item not found")
+
+    cart_item.quantity = quantity
+    db.add(cart_item)
+    db.commit()
+    db.refresh(cart_item)
+
+    return cart_item
+
+
+def remove_cart_item(cart_id: int, sku_id: int, db: Session) -> None:
+    """
+    Delete a cart item by cart ID and SKU ID.
+
+    Args:
+        cart_id (int): The ID of the cart that contains the item.
+        sku_id (int): The ID of the SKU to be removed.
+        db (Session): The database session.
+
+    Raises:
+        HTTPException: If the cart item does not exist.
+    """
+    cart_item_to_remove = get_cart_item_by_sku(cart_id, sku_id, db)
+
+    if not cart_item_to_remove:
+        raise HTTPException(status_code=404, detail="Cart items not found")
+
+    try:
+        db.delete(cart_item_to_remove)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise e

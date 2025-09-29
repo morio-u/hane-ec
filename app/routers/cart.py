@@ -5,15 +5,18 @@ from fastapi.templating import Jinja2Templates
 from app.core.config import settings
 from app.utils.session import get_or_create_session_token
 from app.crud.cart import (
+    create_or_increment_cart_item,
+    get_or_create_cart,
     get_subtotal_amount,
     get_user_cart,
     get_user_cart_with_items_and_skus,
     make_cart_summary,
+    remove_cart_item,
+    update_cart_item_quantity,
 )
 from app.crud.sku import get_sku_by_id
 from app.database import get_db
 from app.dependencies.auth import get_current_user
-from app.models import Cart, CartItem, Sku
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")
@@ -33,6 +36,8 @@ def view_cart(
     # Retrieves the current user's cart with cart_items and skus.
     # Returns None if no matching cart is found.
     cart = get_user_cart_with_items_and_skus(db, user, session_token)
+    if not cart:
+        raise HTTPException(status_code=404, detail="Cart not found")
 
     # Convert cart items into a summary format for display.
     cart_summary = make_cart_summary(cart)
@@ -74,35 +79,17 @@ def add_to_cart(
 
     session_token = get_or_create_session_token(session_token)
 
-    # Retrieve the cart information for the specified user.
-    # Returns None if no matching cart is found.
-    cart = get_user_cart(db, user, session_token)
-
-    if cart is None:
-        try:
-            cart = Cart(user_id=user.id if user else None, session_token=session_token)
-            db.add(cart)
-            db.commit()
-            db.refresh(cart)
-        except Exception as e:
-            raise e
-
-    cart_item = (
-        db.query(CartItem)
-        .filter(CartItem.cart_id == cart.id, CartItem.sku_id == sku_id)
-        .first()
-    )
-
+    # Retrieve the cart for the specified user or session.
+    # If no cart exists, create and retrieve a new one.
     try:
-        if cart_item:
-            cart_item.quantity += quantity
-        else:
-            cart_item = CartItem(cart_id=cart.id, sku_id=sku_id, quantity=quantity)
-            db.add(cart_item)
-        db.commit()
-        db.refresh(cart_item)
-    except Exception as e:
-        raise e
+        cart = get_or_create_cart(db, user, session_token)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to get or create cart")
+
+    # Create a new cart item if it doesn't exist, or increment the quantity if it does.
+    # Returns the updated or newly created CartItem.
+    cart_item = create_or_increment_cart_item(cart.id, sku_id, quantity, db)
+    # The returned CartItem is assigned but not used here, since we only redirect.
 
     response = RedirectResponse(url="/cart", status_code=303)
     response.set_cookie(
@@ -124,36 +111,22 @@ def update_cart(
     user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
+    session_token = get_or_create_session_token(session_token)
+
     sku = get_sku_by_id(sku_id, db)
     if not sku:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    session_token = get_or_create_session_token(session_token)
-
     # Retrieve the cart information for the specified user.
     # Returns None if no matching cart is found.
     cart = get_user_cart(db, user, session_token)
-
     if cart is None:
         raise HTTPException(status_code=404, detail="Cart not found")
 
-    cart_item = (
-        db.query(CartItem)
-        .filter(CartItem.cart_id == cart.id, CartItem.sku_id == sku_id)
-        .first()
-    )
-
-    if cart_item is None:
-        raise HTTPException(status_code=404, detail="Cart item not found")
-
-    try:
-        if cart_item:
-            cart_item.quantity = quantity
-        db.add(cart_item)
-        db.commit()
-        db.refresh(cart_item)
-    except Exception as e:
-        raise e
+    # Update the quantity of an existing cart item.
+    # Returns the updated CartItem.
+    cart_item = update_cart_item_quantity(cart.id, sku_id, quantity, db)
+    # The returned CartItem is assigned but not used here, since we only redirect.
 
     response = RedirectResponse(url="/cart", status_code=303)
     response.set_cookie(
@@ -174,11 +147,11 @@ def remove_from_cart(
     user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
+    session_token = get_or_create_session_token(session_token)
+
     sku = get_sku_by_id(sku_id, db)
     if not sku:
         raise HTTPException(status_code=404, detail="Product not found")
-
-    session_token = get_or_create_session_token(session_token)
 
     # Retrieve the cart information for the specified user.
     # Returns None if no matching cart is found.
@@ -187,21 +160,8 @@ def remove_from_cart(
     if cart is None:
         raise HTTPException(status_code=404, detail="Cart not found")
 
-    cart_items_to_remove = (
-        db.query(CartItem)
-        .filter(CartItem.cart_id == cart.id, CartItem.sku_id == sku_id)
-        .all()
-    )
-
-    if not cart_items_to_remove:
-        raise HTTPException(status_code=404, detail="Cart items not found")
-
-    try:
-        for item in cart_items_to_remove:
-            db.delete(item)
-        db.commit()
-    except Exception as e:
-        raise e
+    # Delete a cart item by cart ID and SKU ID.
+    remove_cart_item(cart.id, sku_id, db)
 
     response = RedirectResponse(url="/cart", status_code=303)
     response.set_cookie(
