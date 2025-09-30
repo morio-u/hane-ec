@@ -36,8 +36,6 @@ def view_cart(
     # Retrieves the current user's cart with cart_items and skus.
     # Returns None if no matching cart is found.
     cart = get_user_cart_with_items_and_skus(db, user, session_token)
-    if not cart:
-        raise HTTPException(status_code=404, detail="Cart not found")
 
     # Convert cart items into a summary format for display.
     cart_summary = make_cart_summary(cart)

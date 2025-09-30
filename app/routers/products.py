@@ -1,10 +1,10 @@
 from fastapi import Request, APIRouter, Depends
 from sqlalchemy.orm import Session
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from app.crud.products import get_all_products, get_product_by_id, get_skus_by_id
 from app.database import get_db
 from app.dependencies.auth import get_current_user
-from app.models.product import Product
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")
@@ -14,7 +14,9 @@ templates = Jinja2Templates(directory="app/templates/shop")
 def get_products(
     request: Request, db: Session = Depends(get_db), user=Depends(get_current_user)
 ):
-    products = db.query(Product).all()
+    # Retrieves all products from the database.
+    products = get_all_products(db)
+
     return templates.TemplateResponse(
         "products.html", {"request": request, "products": products, "user": user}
     )
@@ -27,11 +29,11 @@ def get_product_detail(
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
-    product = db.query(Product).filter(Product.id == product_id).first()
-    if product:
-        skus = product.skus
-    else:
-        return RedirectResponse(url="/products", status_code=302)
+    # Retrieves a product from the database by its ID.
+    product = get_product_by_id(product_id, db)
+
+    # Retrieves all SKUs associated with a given product ID.
+    skus = get_skus_by_id(product_id, db)
 
     return templates.TemplateResponse(
         "product_detail.html",

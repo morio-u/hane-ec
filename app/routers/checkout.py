@@ -8,12 +8,14 @@ from app.crud.cart import (
     get_subtotal_amount,
     get_user_cart_with_items_and_skus,
 )
+from app.crud.checkout import (
+    create_new_order,
+    create_new_order_item,
+    create_new_payment,
+)
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models import (
-    Order,
-    OrderItem,
-    Payment,
     OrderStatusEnum,
     PaymentStatusEnum,
     ShippingStatusEnum,
@@ -133,89 +135,58 @@ def checkout_complete(
     shipping_fee = Decimal("20.00")
     payment_processing_fee = Decimal("5.00")
     total_amount = subtotal_amount + shipping_fee + tax_amount
-    order_status = OrderStatusEnum.confirmed
-    shipping_status = ShippingStatusEnum.preparing
-    payment_status = PaymentStatusEnum.unpaid
 
-    new_order = Order(
-        user_id=user.id if user and user.id else None,
-        shipping_last_name=shipping_last_name,
-        shipping_first_name=shipping_first_name,
-        shipping_address_line1=shipping_address_line1,
-        shipping_address_line2=shipping_address_line2,
-        shipping_city=shipping_city,
-        shipping_state=shipping_state,
-        shipping_zip=shipping_zip,
-        shipping_phone_number=shipping_phone_number,
-        subtotal_amount=subtotal_amount,
-        tax_amount=tax_amount,
-        shipping_fee=shipping_fee,
-        payment_processing_fee=payment_processing_fee,
-        total_amount=total_amount,
-        shipping_method=shipping_method,
-        order_status=order_status,
-        shipping_status=shipping_status,
-        payment_status=payment_status,
+    new_order = create_new_order(
+        db,
+        shipping_last_name,
+        shipping_first_name,
+        shipping_address_line1,
+        shipping_city,
+        shipping_state,
+        shipping_zip,
+        shipping_phone_number,
+        subtotal_amount,
+        tax_amount,
+        shipping_fee,
+        payment_processing_fee,
+        total_amount,
+        shipping_method,
+        OrderStatusEnum.confirmed,
+        ShippingStatusEnum.preparing,
+        PaymentStatusEnum.unpaid,
+        shipping_address_line2,
+        user.id if user and user.id else None,
     )
-    try:
-        db.add(new_order)
-        db.commit()
-        db.refresh(new_order)
-    except Exception as e:
-        db.rollback()
-        raise e
 
     # TODO: get target tax, use sample values temporally
     transaction_token = "0123456789"
-    tax_rate = Decimal("0.1")
 
-    new_order_items = []
-    if new_order and new_order.id:
-        for cart_item in sorted(cart.cart_items, key=lambda cart_item: cart_item.id):
-            # TODO: get target tax, use sample values temporally
-            # TODO: Item_price is not necessarily the list price
-            item_price = cart_item.sku.product.price_excluding_tax
-            quantity = cart_item.quantity
-            tax_amount = tax_rate * item_price * quantity
+    if new_order.id:
+        try:
+            # Create OrderItem records in the database based on the items in the given cart
+            # and associate them with the specified order ID.
+            new_order_items = create_new_order_item(new_order.id, cart, db)
+            # The returned new_order_items is assigned but not used here.
 
-            new_order_items.append(
-                OrderItem(
-                    order_id=new_order.id,
-                    sku_id=cart_item.sku.id,
-                    product_name=cart_item.sku.product.name,
-                    item_price=item_price,
-                    quantity=quantity,
-                    item_total_amount=cart_item.sku.product.price_excluding_tax
-                    * cart_item.quantity,
-                    tax_rate=tax_rate,
-                    tax_amount=tax_amount,
-                )
+            # Create a new payment record and persist it in the database.
+            new_payment = create_new_payment(
+                new_order.id,
+                payment_method,
+                PaymentStatusEnum.unpaid,
+                transaction_token,
+                db,
+                user.id if user and user.id else None,
             )
-        try:
-            db.add_all(new_order_items)
-            db.commit()
-            for new_order_item in new_order_items:
-                db.refresh(new_order_item)
-        except Exception as e:
-            db.rollback()
-            raise e
+            # The returned new_payment is assigned but not used here.
 
-        new_payment = Payment(
-            user_id=user.id if user and user.id else None,
-            order_id=new_order.id,
-            payment_method=payment_method,
-            payment_status=payment_status,
-            transaction_token=transaction_token,
-        )
-        try:
-            db.add(new_payment)
+            db.delete(cart)
             db.commit()
-            db.refresh(new_payment)
         except Exception as e:
             db.rollback()
             raise e
-        db.delete(cart)
-        db.commit()
+    else:
+        raise HTTPException(status_code=404, detail="Order not found")
+
     return templates.TemplateResponse(
         "checkout_complete.html",
         {"request": request, "user": user, "order_id": new_order.id},
