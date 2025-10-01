@@ -12,6 +12,7 @@ from app.crud.checkout import (
     create_new_order,
     create_new_order_item,
     create_new_payment,
+    delete_cart,
 )
 from app.database import get_db
 from app.dependencies.auth import get_current_user
@@ -166,7 +167,8 @@ def checkout_complete(
             # Create OrderItem records in the database based on the items in the given cart
             # and associate them with the specified order ID.
             new_order_items = create_new_order_item(new_order.id, cart, db)
-            # The returned new_order_items is assigned but not used here.
+            if not new_order_items:
+                raise HTTPException(status_code=404, detail="Order not found")
 
             # Create a new payment record and persist it in the database.
             new_payment = create_new_payment(
@@ -177,10 +179,11 @@ def checkout_complete(
                 db,
                 user.id if user and user.id else None,
             )
-            # The returned new_payment is assigned but not used here.
+            if not new_payment:
+                raise HTTPException(status_code=404, detail="Order not found")
 
-            db.delete(cart)
-            db.commit()
+            # Deletes the specified cart from the database.
+            delete_cart(cart, db)
         except Exception as e:
             db.rollback()
             raise e

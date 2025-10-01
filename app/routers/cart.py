@@ -33,15 +33,21 @@ def view_cart(
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
     session_token = get_or_create_session_token(session_token)
 
-    # Retrieves the current user's cart with cart_items and skus.
-    # Returns None if no matching cart is found.
-    cart = get_user_cart_with_items_and_skus(db, user, session_token)
+    try:
+        # Note: Intentionally not raising an error when cart is None.
+        # The template will handle empty or missing cart gracefully.
 
-    # Convert cart items into a summary format for display.
-    cart_summary = make_cart_summary(cart)
+        # Retrieves the current user's cart with cart_items and skus.
+        # Returns None if no matching cart is found.
+        cart = get_user_cart_with_items_and_skus(db, user, session_token)
 
-    # Calculate the subtotal amount of all items in the cart.
-    subtotal_amount = get_subtotal_amount(cart)
+        # Convert cart items into a summary format for display.
+        cart_summary = make_cart_summary(cart)
+
+        # Calculate the subtotal amount of all items in the cart.
+        subtotal_amount = get_subtotal_amount(cart)
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
     response = templates.TemplateResponse(
         "cart.html",
@@ -71,23 +77,29 @@ def add_to_cart(
     user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-    sku = get_sku_by_id(sku_id, db)
-    if not sku:
-        raise HTTPException(status_code=404, detail="Product not found")
-
     session_token = get_or_create_session_token(session_token)
 
-    # Retrieve the cart for the specified user or session.
-    # If no cart exists, create and retrieve a new one.
     try:
-        cart = get_or_create_cart(db, user, session_token)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Failed to get or create cart")
+        # Retrieve a single SKU object by its unique ID.
+        sku = get_sku_by_id(sku_id, db)
+        if sku is None:
+            raise HTTPException(status_code=404, detail="Product not found")
 
-    # Create a new cart item if it doesn't exist, or increment the quantity if it does.
-    # Returns the updated or newly created CartItem.
-    cart_item = create_or_increment_cart_item(cart.id, sku_id, quantity, db)
-    # The returned CartItem is assigned but not used here, since we only redirect.
+        # Retrieve the cart for the specified user or session.
+        # If no cart exists, create and retrieve a new one.
+        cart = get_or_create_cart(db, user, session_token)
+        if not cart:
+            raise HTTPException(status_code=404, detail="Cart not found")
+
+        # Create a new cart item if it doesn't exist, or increment the quantity if it does.
+        # Returns the updated or newly created CartItem.
+        cart_item = create_or_increment_cart_item(cart.id, sku_id, quantity, db)
+        if not cart_item:
+            raise HTTPException(status_code=404, detail="CartItem not found")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
     response = RedirectResponse(url="/cart", status_code=303)
     response.set_cookie(
@@ -111,20 +123,27 @@ def update_cart(
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
     session_token = get_or_create_session_token(session_token)
 
-    sku = get_sku_by_id(sku_id, db)
-    if not sku:
-        raise HTTPException(status_code=404, detail="Product not found")
+    try:
+        # Retrieve a single SKU object by its unique ID.
+        sku = get_sku_by_id(sku_id, db)
+        if sku is None:
+            raise HTTPException(status_code=404, detail="Product not found")
 
-    # Retrieve the cart information for the specified user.
-    # Returns None if no matching cart is found.
-    cart = get_user_cart(db, user, session_token)
-    if cart is None:
-        raise HTTPException(status_code=404, detail="Cart not found")
+        # Retrieve the cart information for the specified user.
+        # Returns None if no matching cart is found.
+        cart = get_user_cart(db, user, session_token)
+        if cart is None:
+            raise HTTPException(status_code=404, detail="Cart not found")
 
-    # Update the quantity of an existing cart item.
-    # Returns the updated CartItem.
-    cart_item = update_cart_item_quantity(cart.id, sku_id, quantity, db)
-    # The returned CartItem is assigned but not used here, since we only redirect.
+        # Update the quantity of an existing cart item.
+        # Returns the updated CartItem.
+        cart_item = update_cart_item_quantity(cart.id, sku_id, quantity, db)
+        if not cart_item:
+            raise HTTPException(status_code=404, detail="CartItem not found")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
     response = RedirectResponse(url="/cart", status_code=303)
     response.set_cookie(
@@ -147,19 +166,24 @@ def remove_from_cart(
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
     session_token = get_or_create_session_token(session_token)
 
-    sku = get_sku_by_id(sku_id, db)
-    if not sku:
-        raise HTTPException(status_code=404, detail="Product not found")
+    try:
+        # Retrieve a single SKU object by its unique ID.
+        sku = get_sku_by_id(sku_id, db)
+        if sku is None:
+            raise HTTPException(status_code=404, detail="Product not found")
 
-    # Retrieve the cart information for the specified user.
-    # Returns None if no matching cart is found.
-    cart = get_user_cart(db, user, session_token)
+        # Retrieve the cart information for the specified user.
+        # Returns None if no matching cart is found.
+        cart = get_user_cart(db, user, session_token)
+        if cart is None:
+            raise HTTPException(status_code=404, detail="Cart not found")
 
-    if cart is None:
-        raise HTTPException(status_code=404, detail="Cart not found")
-
-    # Delete a cart item by cart ID and SKU ID.
-    remove_cart_item(cart.id, sku_id, db)
+        # Delete a cart item by cart ID and SKU ID.
+        remove_cart_item(cart.id, sku_id, db)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Internal server error")
 
     response = RedirectResponse(url="/cart", status_code=303)
     response.set_cookie(

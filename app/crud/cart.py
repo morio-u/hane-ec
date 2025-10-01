@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import List, Optional
 from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
@@ -34,7 +35,7 @@ def get_user_cart(
     db: Session, user: Optional[User] = None, session_token: Optional[str] = None
 ) -> Optional[Cart]:
     """
-    Builds a base query to retrieve a cart filtered by user ID or session token.
+    Retrieves the user's cart based on the user or session token.
 
     Parameters:
         db (Session): The database session.
@@ -42,7 +43,7 @@ def get_user_cart(
         session_token (Optional[str]): The session token for guest users.
 
     Returns:
-        Optional[Query]: A SQLAlchemy query object for the cart, or None if neither user nor session token is provided.
+        Optional[Cart]: The Cart object if found, otherwise None.
     """
     cart_query = get_cart_query(db, user, session_token)
 
@@ -110,7 +111,7 @@ def make_cart_summary(cart: Cart) -> List[dict]:
     return cart_summary
 
 
-def get_subtotal_amount(cart: Cart) -> float:
+def get_subtotal_amount(cart: Cart) -> Decimal:
     """
     Calculate the subtotal amount of all items in the cart.
 
@@ -118,7 +119,7 @@ def get_subtotal_amount(cart: Cart) -> float:
         cart (Cart): The Cart model instance.
 
     Returns:
-        float: The subtotal (excluding tax).
+        Decimal: The subtotal (excluding tax).
     """
     if not cart or not cart.cart_items:
         return 0.0
@@ -153,7 +154,7 @@ def get_cart_item_by_sku(cart_id: int, sku_id: int, db: Session) -> Optional[Car
 
 def get_or_create_cart(
     db: Session, user: Optional[User] = None, session_token: Optional[str] = None
-) -> Optional[Cart]:
+) -> Cart:
     """
     Retrieve the cart for the specified user or session.
     If no cart exists, create a new one.
@@ -164,7 +165,7 @@ def get_or_create_cart(
         session_token (Optional[str]): A unique token for guest users.
 
     Returns:
-        Optional[Cart]: The retrieved or newly created cart.
+        Cart: The retrieved or newly created cart.
     """
     cart = get_user_cart(db, user, session_token)
 
@@ -183,7 +184,7 @@ def get_or_create_cart(
 
 def create_or_increment_cart_item(
     cart_id: int, sku_id: int, quantity: int, db: Session
-) -> Optional[CartItem]:
+) -> CartItem:
     """
     Create a new cart item or update the quantity of an existing one.
 
@@ -259,7 +260,7 @@ def remove_cart_item(cart_id: int, sku_id: int, db: Session) -> None:
     cart_item_to_remove = get_cart_item_by_sku(cart_id, sku_id, db)
 
     if not cart_item_to_remove:
-        raise HTTPException(status_code=404, detail="Cart items not found")
+        raise HTTPException(status_code=404, detail="Cart item not found")
 
     try:
         db.delete(cart_item_to_remove)

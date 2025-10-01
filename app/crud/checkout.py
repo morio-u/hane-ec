@@ -197,3 +197,25 @@ def create_new_payment(
         raise e
 
     return new_payment
+
+
+def delete_cart(cart: Cart, db: Session) -> None:
+    """
+    Deletes the specified cart from the database.
+
+    Parameters:
+        cart (Cart): The cart instance to be deleted.
+        db (Session): The database session used to perform the operation.
+
+    Returns:
+        None: This function performs a side effect (deleting a cart) and does not return a value.
+
+    Raises:
+        Exception: If the deletion or commit fails, the transaction is rolled back and the exception is re-raised.
+    """
+    try:
+        db.delete(cart)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise e

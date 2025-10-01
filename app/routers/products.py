@@ -1,4 +1,4 @@
-from fastapi import Request, APIRouter, Depends
+from fastapi import Request, APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -31,9 +31,13 @@ def get_product_detail(
 ):
     # Retrieves a product from the database by its ID.
     product = get_product_by_id(product_id, db)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
 
     # Retrieves all SKUs associated with a given product ID.
     skus = get_skus_by_id(product_id, db)
+    if skus is None:
+        raise HTTPException(status_code=404, detail="Product not found")
 
     return templates.TemplateResponse(
         "product_detail.html",
