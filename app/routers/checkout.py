@@ -1,9 +1,8 @@
 from decimal import Decimal
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, HTTPException, Request, Cookie, Depends, Form
+from fastapi import APIRouter, HTTPException, Request, Depends, Form
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from app.utils.session import get_or_create_session_token
 from app.crud.cart import (
     get_subtotal_amount,
     get_user_cart_with_items_and_skus,
@@ -16,6 +15,7 @@ from app.crud.checkout import (
 )
 from app.database import get_db
 from app.dependencies.auth import get_current_user
+from app.dependencies.session import get_or_create_session_token
 from app.models import (
     OrderStatusEnum,
     PaymentStatusEnum,
@@ -50,12 +50,11 @@ def checkout_confirm(
     card_number: str = Form(...),
     card_name: str = Form(...),
     card_cvv: str = Form(...),
-    session_token: str = Cookie(None),
+    session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     # TODO: Add validation
-    session_token = get_or_create_session_token(session_token)
 
     # Retrieves the current user's cart with cart_items and skus.
     # Returns None if no matching cart is found.
@@ -112,12 +111,11 @@ def checkout_complete(
     shipping_phone_number: str = Form(...),
     shipping_method: str = Form(...),
     payment_method: str = Form(...),
-    session_token: str = Cookie(None),
+    session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     # TODO: Add validation
-    session_token = get_or_create_session_token(session_token)
 
     # Retrieves the current user's cart with cart_items and skus.
     # Returns None if no matching cart is found.

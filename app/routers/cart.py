@@ -1,9 +1,8 @@
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, HTTPException, Request, Response, Cookie, Depends, Form
+from fastapi import APIRouter, HTTPException, Request, Response, Depends, Form
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.core.config import settings
-from app.utils.session import get_or_create_session_token
 from app.crud.cart import (
     create_or_increment_cart_item,
     get_or_create_cart,
@@ -17,6 +16,7 @@ from app.crud.cart import (
 from app.crud.sku import get_sku_by_id
 from app.database import get_db
 from app.dependencies.auth import get_current_user
+from app.dependencies.session import get_or_create_session_token
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")
@@ -26,12 +26,11 @@ templates = Jinja2Templates(directory="app/templates/shop")
 def view_cart(
     request: Request,
     response: Response,
-    session_token: str = Cookie(None),
+    session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-    session_token = get_or_create_session_token(session_token)
 
     try:
         # Note: Intentionally not raising an error when cart is None.
@@ -72,12 +71,11 @@ def add_to_cart(
     response: Response,
     sku_id: int = Form(...),
     quantity: int = Form(...),
-    session_token: str = Cookie(None),
+    session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-    session_token = get_or_create_session_token(session_token)
 
     try:
         # Retrieve a single SKU object by its unique ID.
@@ -116,12 +114,11 @@ def update_cart(
     response: Response,
     sku_id: int,
     quantity: int = Form(...),
-    session_token: str = Cookie(None),
+    session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-    session_token = get_or_create_session_token(session_token)
 
     try:
         # Retrieve a single SKU object by its unique ID.
@@ -159,12 +156,11 @@ def update_cart(
 def remove_from_cart(
     response: Response,
     sku_id: int,
-    session_token: str = Cookie(None),
+    session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-    session_token = get_or_create_session_token(session_token)
 
     try:
         # Retrieve a single SKU object by its unique ID.
