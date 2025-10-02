@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import List, Optional
+from typing import Any, List, Dict, Optional
 from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
 from app.models import Cart, CartItem, Sku, User
@@ -81,7 +81,7 @@ def get_user_cart_with_items_and_skus(
     return cart
 
 
-def make_cart_summary(cart: Cart) -> List[dict]:
+def make_cart_summary(cart: Cart) -> List[Dict[str, Any]]:
     """
     Convert cart items into a summary format for display.
 

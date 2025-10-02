@@ -1,12 +1,12 @@
 from datetime import timedelta
 from typing import Dict
-from fastapi import APIRouter, Request, HTTPException, status, Depends, Form
+from fastapi import APIRouter, HTTPException, Request, status, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.core.jwt import create_access_token
 from app.core.config import settings
-from app.crud.user import get_user_by_email, create_user, authenticate_user
+from app.crud.user import authenticate_user, create_user, get_user_by_email
 from app.database import get_db
 
 router = APIRouter()

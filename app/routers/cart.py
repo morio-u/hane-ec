@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from fastapi import APIRouter, HTTPException, Request, Response, Depends, Form
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from app.core.config import settings
+from app.core.cookies import template_with_cookie
 from app.crud.cart import (
     create_or_increment_cart_item,
     get_or_create_cart,
@@ -48,21 +48,15 @@ def view_cart(
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
-    response = templates.TemplateResponse(
-        "cart.html",
-        {
-            "request": request,
-            "user": user,
-            "cart_summary": cart_summary,
-            "subtotal_amount": subtotal_amount,
-        },
+    response = template_with_cookie(
+        user,
+        cart_summary,
+        subtotal_amount,
+        session_token,
+        request,
+        templates,
     )
-    response.set_cookie(
-        key="session_token",
-        value=session_token,
-        httponly=True,
-        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS,
-    )
+
     return response
 
 
@@ -99,14 +93,7 @@ def add_to_cart(
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
-    response = RedirectResponse(url="/cart", status_code=303)
-    response.set_cookie(
-        key="session_token",
-        value=session_token,
-        httponly=True,
-        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS,
-    )
-    return response
+    return RedirectResponse(url="/cart", status_code=303)
 
 
 @router.post("/update/{sku_id}")
@@ -142,14 +129,7 @@ def update_cart(
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
-    response = RedirectResponse(url="/cart", status_code=303)
-    response.set_cookie(
-        key="session_token",
-        value=session_token,
-        httponly=True,
-        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS,
-    )
-    return response
+    return RedirectResponse(url="/cart", status_code=303)
 
 
 @router.post("/remove/{sku_id}")
@@ -181,11 +161,4 @@ def remove_from_cart(
     except Exception:
         raise HTTPException(status_code=500, detail="Internal server error")
 
-    response = RedirectResponse(url="/cart", status_code=303)
-    response.set_cookie(
-        key="session_token",
-        value=session_token,
-        httponly=True,
-        max_age=settings.SESSION_TOKEN_EXPIRE_SECONDS,
-    )
-    return response
+    return RedirectResponse(url="/cart", status_code=303)
