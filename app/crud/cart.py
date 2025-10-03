@@ -103,6 +103,7 @@ def make_cart_summary(cart: Cart) -> List[Dict[str, Any]]:
                 "sku": cart_item.sku.barcode,
                 "name": cart_item.sku.product.name,
                 "price": cart_item.sku.product.price_excluding_tax,
+                "product_id": cart_item.sku.product.id,
                 "quantity": cart_item.quantity,
                 "total": cart_item.sku.product.price_excluding_tax * cart_item.quantity,
             }

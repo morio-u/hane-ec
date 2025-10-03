@@ -23,7 +23,7 @@
                             <img src="{{ url_for('static', path='images/products/product-1.jpg') }}" 
                                  alt="{{ item.name }}" style="width:80px; height:auto;">
                         </td>
-                        <td>{{ item.name }}</td>
+                        <td><a style="color:inherit;" href="/products/{{ item.product_id }}">{{ item.name }}</a></td>
                         <td>${{ "%.2f"|format(item.price) }}</td>
                         <td>
                             <!-- update quantity -->
