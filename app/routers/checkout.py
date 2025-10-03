@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Optional
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, HTTPException, Request, Depends, Form
 from fastapi.responses import HTMLResponse
@@ -16,18 +17,21 @@ from app.crud.checkout import (
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.dependencies.session import get_or_create_session_token
-from app.models import (
+from app.models.order import (
     OrderStatusEnum,
     PaymentStatusEnum,
     ShippingStatusEnum,
 )
+from app.models.user import User
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")
 
 
 @router.get("", response_class=HTMLResponse)
-def view_checkout_form(request: Request, user=Depends(get_current_user)):
+def view_checkout_form(
+    request: Request, user: Optional[User] = Depends(get_current_user)
+):
     return templates.TemplateResponse(
         "checkout_form.html",
         {"request": request, "user": user},
@@ -52,7 +56,7 @@ def checkout_confirm(
     card_cvv: str = Form(...),
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user: Optional[User] = Depends(get_current_user),
 ):
     # TODO: Add validation
 
@@ -113,7 +117,7 @@ def checkout_complete(
     payment_method: str = Form(...),
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user: Optional[User] = Depends(get_current_user),
 ):
     # TODO: Add validation
 

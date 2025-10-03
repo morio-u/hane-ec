@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, HTTPException, Request, Response, Depends, Form
 from fastapi.responses import RedirectResponse
@@ -17,6 +18,7 @@ from app.crud.sku import get_sku_by_id
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.dependencies.session import get_or_create_session_token
+from app.models.user import User
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")
@@ -28,7 +30,7 @@ def view_cart(
     response: Response,
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user: Optional[User] = Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
 
@@ -62,12 +64,11 @@ def view_cart(
 
 @router.post("/add")
 def add_to_cart(
-    response: Response,
     sku_id: int = Form(...),
     quantity: int = Form(...),
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user: Optional[User] = Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
 
@@ -98,12 +99,11 @@ def add_to_cart(
 
 @router.post("/update/{sku_id}")
 def update_cart(
-    response: Response,
     sku_id: int,
     quantity: int = Form(...),
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user: Optional[User] = Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
 
@@ -134,11 +134,10 @@ def update_cart(
 
 @router.post("/remove/{sku_id}")
 def remove_from_cart(
-    response: Response,
     sku_id: int,
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
-    user=Depends(get_current_user),
+    user: Optional[User] = Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
 
