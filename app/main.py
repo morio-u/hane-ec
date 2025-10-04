@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from app.routers import home, products, auth, users, cart, checkout
+from app.core.exceptions import RedirectHomeException
+from app.core.exception_handlers import redirect_home_handler
 
 app = FastAPI()
+app.add_exception_handler(RedirectHomeException, redirect_home_handler)
 
 # shop
 app.mount("/static", StaticFiles(directory="app/static/shop"), name="static")

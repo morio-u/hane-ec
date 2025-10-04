@@ -1,24 +1,26 @@
 from typing import Optional
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, HTTPException, Request, Response, Depends, Form
+from fastapi import APIRouter, Request, Response, Depends
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.core.cookies import template_with_cookie
+from app.core.exceptions import RedirectHomeException
 from app.crud.cart import (
-    create_or_increment_cart_item,
-    get_or_create_cart,
-    get_subtotal_amount,
-    get_user_cart,
-    get_user_cart_with_items_and_skus,
-    make_cart_summary,
-    remove_cart_item,
-    update_cart_item_quantity,
+    process_add_to_cart,
+    process_remove_from_cart,
+    process_update_cart,
+    process_view_cart,
 )
-from app.crud.sku import get_sku_by_id
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.dependencies.session import get_or_create_session_token
 from app.models.user import User
+from app.schemas.cart import AddToCartForm, UpdateCartForm
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")
@@ -35,37 +37,30 @@ def view_cart(
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
 
     try:
-        # Note: Intentionally not raising an error when cart is None.
-        # The template will handle empty or missing cart gracefully.
+        cart_summary, subtotal_amount = process_view_cart(
+            user=user,
+            session_token=session_token,
+            db=db,
+        )
 
-        # Retrieves the current user's cart with cart_items and skus.
-        # Returns None if no matching cart is found.
-        cart = get_user_cart_with_items_and_skus(db, user, session_token)
-
-        # Convert cart items into a summary format for display.
-        cart_summary = make_cart_summary(cart)
-
-        # Calculate the subtotal amount of all items in the cart.
-        subtotal_amount = get_subtotal_amount(cart)
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-    response = template_with_cookie(
-        user,
-        cart_summary,
-        subtotal_amount,
-        session_token,
-        request,
-        templates,
-    )
+        response = template_with_cookie(
+            user,
+            cart_summary,
+            subtotal_amount,
+            session_token,
+            request,
+            templates,
+        )
+    except Exception as e:
+        logger.exception(f"Unexpected error in view_cart: {e}")
+        raise RedirectHomeException("Unexpected error")
 
     return response
 
 
 @router.post("/add")
 def add_to_cart(
-    sku_id: int = Form(...),
-    quantity: int = Form(...),
+    form: AddToCartForm = Depends(AddToCartForm.as_form),
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
@@ -73,26 +68,18 @@ def add_to_cart(
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
 
     try:
-        # Retrieve a single SKU object by its unique ID.
-        sku = get_sku_by_id(sku_id, db)
-        if sku is None:
-            raise HTTPException(status_code=404, detail="Product not found")
-
-        # Retrieve the cart for the specified user or session.
-        # If no cart exists, create and retrieve a new one.
-        cart = get_or_create_cart(db, user, session_token)
-        if not cart:
-            raise HTTPException(status_code=404, detail="Cart not found")
-
-        # Create a new cart item if it doesn't exist, or increment the quantity if it does.
-        # Returns the updated or newly created CartItem.
-        cart_item = create_or_increment_cart_item(cart.id, sku_id, quantity, db)
-        if not cart_item:
-            raise HTTPException(status_code=404, detail="CartItem not found")
-    except HTTPException:
-        raise
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        process_add_to_cart(
+            sku_id=form.sku_id,
+            quantity=form.quantity,
+            user=user,
+            session_token=session_token,
+            db=db,
+        )
+    except RedirectHomeException as e:
+        raise RedirectHomeException("Invalid SKU or other cart error") from e
+    except Exception as e:
+        logger.exception(f"Unexpected error in add_to_cart: {e}")
+        raise RedirectHomeException("Unexpected error")
 
     return RedirectResponse(url="/cart", status_code=303)
 
@@ -100,7 +87,7 @@ def add_to_cart(
 @router.post("/update/{sku_id}")
 def update_cart(
     sku_id: int,
-    quantity: int = Form(...),
+    form: UpdateCartForm = Depends(UpdateCartForm.as_form),
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
@@ -108,26 +95,18 @@ def update_cart(
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
 
     try:
-        # Retrieve a single SKU object by its unique ID.
-        sku = get_sku_by_id(sku_id, db)
-        if sku is None:
-            raise HTTPException(status_code=404, detail="Product not found")
-
-        # Retrieve the cart information for the specified user.
-        # Returns None if no matching cart is found.
-        cart = get_user_cart(db, user, session_token)
-        if cart is None:
-            raise HTTPException(status_code=404, detail="Cart not found")
-
-        # Update the quantity of an existing cart item.
-        # Returns the updated CartItem.
-        cart_item = update_cart_item_quantity(cart.id, sku_id, quantity, db)
-        if not cart_item:
-            raise HTTPException(status_code=404, detail="CartItem not found")
-    except HTTPException:
-        raise
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        process_update_cart(
+            sku_id=sku_id,
+            quantity=form.quantity,
+            user=user,
+            session_token=session_token,
+            db=db,
+        )
+    except RedirectHomeException as e:
+        raise RedirectHomeException("Invalid SKU or other cart error") from e
+    except Exception as e:
+        logger.exception(f"Unexpected error in add_to_cart: {e}")
+        raise RedirectHomeException("Unexpected error")
 
     return RedirectResponse(url="/cart", status_code=303)
 
@@ -142,22 +121,16 @@ def remove_from_cart(
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
 
     try:
-        # Retrieve a single SKU object by its unique ID.
-        sku = get_sku_by_id(sku_id, db)
-        if sku is None:
-            raise HTTPException(status_code=404, detail="Product not found")
-
-        # Retrieve the cart information for the specified user.
-        # Returns None if no matching cart is found.
-        cart = get_user_cart(db, user, session_token)
-        if cart is None:
-            raise HTTPException(status_code=404, detail="Cart not found")
-
-        # Delete a cart item by cart ID and SKU ID.
-        remove_cart_item(cart.id, sku_id, db)
-    except HTTPException:
-        raise
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal server error")
+        process_remove_from_cart(
+            sku_id=sku_id,
+            user=user,
+            session_token=session_token,
+            db=db,
+        )
+    except RedirectHomeException as e:
+        raise RedirectHomeException("Invalid SKU or other cart error") from e
+    except Exception as e:
+        logger.exception(f"Unexpected error in add_to_cart: {e}")
+        raise RedirectHomeException("Unexpected error")
 
     return RedirectResponse(url="/cart", status_code=303)

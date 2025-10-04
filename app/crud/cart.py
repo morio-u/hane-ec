@@ -1,7 +1,8 @@
 from decimal import Decimal
 from typing import Any, List, Dict, Optional
 from sqlalchemy.orm import Session, joinedload
-from fastapi import HTTPException
+from app.core.exceptions import RedirectHomeException
+from app.crud.sku import get_sku_by_id
 from app.models import Cart, CartItem, Sku, User
 
 
@@ -231,12 +232,12 @@ def update_cart_item_quantity(
         CartItem: The updated cart item.
 
     Raises:
-        HTTPException or ValueError: If the cart item does not exist.
+        RedirectHomeException or ValueError: If the cart item does not exist.
     """
     cart_item = get_cart_item_by_sku(cart_id, sku_id, db)
 
     if cart_item is None:
-        raise HTTPException(status_code=404, detail="Cart item not found")
+        raise RedirectHomeException("Cart item not found")
 
     cart_item.quantity = quantity
     db.add(cart_item)
@@ -256,12 +257,12 @@ def remove_cart_item(cart_id: int, sku_id: int, db: Session) -> None:
         db (Session): The database session.
 
     Raises:
-        HTTPException: If the cart item does not exist.
+        RedirectHomeException: If the cart item does not exist.
     """
     cart_item_to_remove = get_cart_item_by_sku(cart_id, sku_id, db)
 
     if not cart_item_to_remove:
-        raise HTTPException(status_code=404, detail="Cart item not found")
+        raise RedirectHomeException("Cart item not found")
 
     try:
         db.delete(cart_item_to_remove)
@@ -269,3 +270,140 @@ def remove_cart_item(cart_id: int, sku_id: int, db: Session) -> None:
     except Exception as e:
         db.rollback()
         raise e
+
+
+def process_view_cart(user: Optional[User], session_token: str, db: Session):
+    """
+    Retrieve and prepare the user's cart data for display, including cart summary and subtotal.
+
+    This function fetches the current user's cart along with related cart items and SKU details.
+    If no cart exists, it returns empty summary and subtotal gracefully without raising an error.
+
+    Args:
+        user (Optional[User]): The authenticated user, or None for guest users.
+        session_token (str): The session token used to identify the guest cart.
+        db (Session): The SQLAlchemy database session.
+
+    Returns:
+        Tuple[List[CartItemSummary], Decimal]:
+            - cart_summary: A list of summarized cart items for display.
+            - subtotal_amount: The total price of all items in the cart.
+
+    Note:
+        If the cart does not exist, the return values will represent an empty cart.
+        It's expected that the calling template handles this case gracefully.
+    """
+    # Note: Intentionally not raising an error when cart is None.
+    # The template will handle empty or missing cart gracefully.
+
+    # Retrieves the current user's cart with cart_items and skus.
+    # Returns None if no matching cart is found.
+    cart = get_user_cart_with_items_and_skus(db, user, session_token)
+
+    # Convert cart items into a summary format for display.
+    cart_summary = make_cart_summary(cart)
+
+    # Calculate the subtotal amount of all items in the cart.
+    subtotal_amount = get_subtotal_amount(cart)
+
+    return cart_summary, subtotal_amount
+
+
+def process_add_to_cart(
+    sku_id: int, quantity: int, user: Optional[User], session_token: str, db: Session
+):
+    """
+    Add a SKU to the user's cart, or increment the quantity if it already exists.
+
+    Args:
+        sku_id (int): The ID of the SKU to add to the cart.
+        quantity (int): The quantity to add.
+        user (User or None): The authenticated user, or None for guest users.
+        session_token (str): The session token for identifying guest users.
+        db (Session): The database session.
+
+    Raises:
+        RedirectHomeException: If the SKU does not exist, the cart could not be retrieved or created,
+                       or the cart item could not be created or updated.
+    """
+    # Retrieve a single SKU object by its unique ID.
+    sku = get_sku_by_id(sku_id, db)
+    if sku is None:
+        raise RedirectHomeException("Product not found")
+
+    # Retrieve the cart for the specified user or session.
+    # If no cart exists, create and retrieve a new one.
+    cart = get_or_create_cart(db, user, session_token)
+    if not cart:
+        raise RedirectHomeException("Cart not found")
+
+    # Create a new cart item if it doesn't exist, or increment the quantity if it does.
+    # Returns the updated or newly created CartItem.
+    cart_item = create_or_increment_cart_item(cart.id, sku_id, quantity, db)
+    if not cart_item:
+        raise RedirectHomeException("CartItem not found")
+
+
+def process_update_cart(
+    sku_id: int, quantity: int, user: Optional[User], session_token: str, db: Session
+):
+    """
+    Update the quantity of an existing cart item in the user's cart.
+
+    Args:
+        sku_id (int): The ID of the SKU to update.
+        quantity (int): The new quantity to set.
+        user (User or None): The authenticated user, or None for guest users.
+        session_token (str): The session token for identifying guest users.
+        db (Session): The database session.
+
+    Raises:
+        RedirectHomeException: If the SKU does not exist, the cart is not found,
+                       or the cart item could not be updated.
+    """
+    # Retrieve a single SKU object by its unique ID.
+    sku = get_sku_by_id(sku_id, db)
+    if sku is None:
+        raise RedirectHomeException("Product not found")
+
+    # Retrieve the cart information for the specified user.
+    # Returns None if no matching cart is found.
+    cart = get_user_cart(db, user, session_token)
+    if cart is None:
+        raise RedirectHomeException("Cart not found")
+
+    # Update the quantity of an existing cart item.
+    # Returns the updated CartItem.
+    cart_item = update_cart_item_quantity(cart.id, sku_id, quantity, db)
+    if not cart_item:
+        raise RedirectHomeException("CartItem not found")
+
+
+def process_remove_from_cart(
+    sku_id: int, user: Optional[User], session_token: str, db: Session
+):
+    """
+    Remove a SKU from the user's cart.
+
+    Args:
+        sku_id (int): The ID of the SKU to remove.
+        user (User or None): The authenticated user, or None for guest users.
+        session_token (str): The session token for identifying guest users.
+        db (Session): The database session.
+
+    Raises:
+        RedirectHomeException: If the SKU does not exist or the cart is not found.
+    """
+    # Retrieve a single SKU object by its unique ID.
+    sku = get_sku_by_id(sku_id, db)
+    if sku is None:
+        raise RedirectHomeException("Product not found")
+
+    # Retrieve the cart information for the specified user.
+    # Returns None if no matching cart is found.
+    cart = get_user_cart(db, user, session_token)
+    if cart is None:
+        raise RedirectHomeException("Cart not found")
+
+    # Delete a cart item by cart ID and SKU ID.
+    remove_cart_item(cart.id, sku_id, db)
