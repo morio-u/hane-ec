@@ -1,11 +1,14 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
+from app.core.config import settings
 from app.routers import home, products, auth, users, cart, checkout
-from app.core.exceptions import RedirectHomeException
-from app.core.exception_handlers import redirect_home_handler
+from app.core.exception import RedirectHomeException
+from app.core.exception_handler import redirect_home_handler
 
 app = FastAPI()
 app.add_exception_handler(RedirectHomeException, redirect_home_handler)
+app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
 # shop
 app.mount("/static", StaticFiles(directory="app/static/shop"), name="static")

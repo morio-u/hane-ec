@@ -1,0 +1,24 @@
+from typing import List
+from sqlalchemy.orm import Session
+from app.crud.sku import get_sku_by_id
+
+
+def validate_add_to_cart(sku_id: int, quantity: int, db: Session) -> List[str]:
+    """
+    Validate if the SKU exists and the quantity is acceptable for adding to the cart.
+
+    Args:
+        sku_id (int): The ID of the SKU to validate.
+        quantity (int): The requested quantity to add.
+        db (Session): The database session for querying SKU information.
+
+    Returns:
+        List[str]: A list of error messages. Empty if no errors.
+    """
+    errors = []
+
+    sku = get_sku_by_id(sku_id, db)
+    if sku is None:
+        errors.append("The specified product was not found.")
+
+    return errors

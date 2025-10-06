@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 from fastapi import APIRouter, Request, Response, Depends
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from app.core.cookies import template_with_cookie
-from app.core.exceptions import RedirectHomeException
+from app.core.cookie import template_with_cookie
+from app.core.exception import RedirectHomeException
 from app.crud.cart import (
     process_add_to_cart,
     process_remove_from_cart,
@@ -13,9 +13,13 @@ from app.crud.cart import (
 )
 from app.database import get_db
 from app.dependencies.auth import get_current_user
-from app.dependencies.session import get_or_create_session_token
+from app.dependencies.session import (
+    get_errors_from_session,
+    get_or_create_session_token,
+)
 from app.models.user import User
 from app.schemas.cart import AddToCartForm, UpdateCartForm
+from app.validators.cart import validate_add_to_cart
 
 import logging
 
@@ -33,6 +37,7 @@ def view_cart(
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
+    errors: Optional[list[str]] = Depends(get_errors_from_session),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
 
@@ -50,6 +55,7 @@ def view_cart(
             session_token,
             request,
             templates,
+            errors,
         )
     except Exception as e:
         logger.exception(f"Unexpected error in view_cart: {e}")
@@ -60,14 +66,24 @@ def view_cart(
 
 @router.post("/add")
 def add_to_cart(
+    request: Request,
     form: AddToCartForm = Depends(AddToCartForm.as_form),
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
 ):
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-
     try:
+        errors = validate_add_to_cart(
+            sku_id=form.sku_id,
+            quantity=form.quantity,
+            db=db,
+        )
+
+        if errors:
+            request.session["errors"] = errors
+            return RedirectResponse(url="/cart", status_code=303)
+
         process_add_to_cart(
             sku_id=form.sku_id,
             quantity=form.quantity,

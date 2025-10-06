@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Optional
 from fastapi import Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -13,6 +13,7 @@ def set_template_response(
     subtotal_amount: Decimal,
     request: Request,
     templates: Jinja2Templates,
+    errors: Optional[str],
 ) -> Response:
     """
     Render and return the cart template response.
@@ -34,6 +35,7 @@ def set_template_response(
             "user": user,
             "cart_summary": cart_summary,
             "subtotal_amount": subtotal_amount,
+            "errors": errors,
         },
     )
 
@@ -68,6 +70,7 @@ def template_with_cookie(
     session_token: str,
     request: Request,
     templates: Jinja2Templates,
+    errors: Optional[str],
 ) -> Response:
     """
     Render the cart template and set the session cookie.
@@ -84,7 +87,12 @@ def template_with_cookie(
         Response: HTML response with session cookie set.
     """
     response = set_template_response(
-        user, cart_summary, subtotal_amount, request, templates
+        user,
+        cart_summary,
+        subtotal_amount,
+        request,
+        templates,
+        errors,
     )
 
     return set_session_cookie(session_token, response)

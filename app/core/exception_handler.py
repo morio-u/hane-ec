@@ -1,6 +1,6 @@
 from fastapi.responses import RedirectResponse
 from fastapi import Request
-from app.core.exceptions import RedirectHomeException
+from app.core.exception import RedirectHomeException
 import logging
 
 logger = logging.getLogger(__name__)

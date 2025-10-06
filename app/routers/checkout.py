@@ -23,7 +23,7 @@ from app.models.order import (
     ShippingStatusEnum,
 )
 from app.models.user import User
-from app.schemas.order import CheckoutConfirmForm, CheckoutCompleteForm
+from app.schemas.checkout import CheckoutConfirmForm, CheckoutCompleteForm
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")
