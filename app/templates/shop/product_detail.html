@@ -4,6 +4,15 @@
 <div id="fh5co-product">
     <div class="container">
         <div class="row">
+        {% if errors %}
+            <div class="alert alert-danger" style="text-align: left;">
+                <ul class="mb-3">
+                    {% for error in errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
             <div class="col-md-6">
                 <div class="product-grid" style="background-image:url('{{ url_for('static', path='images/products/product-1.jpg') }}'); height:400px; background-size:cover;">
                 </div>
@@ -12,13 +21,14 @@
                 <h4>{{ product.name }}</h4>
                 <p class="price">${{ "%.2f"|format(product.price_excluding_tax) }}</p>
                 <p>{{ product.description }}</p>
-                <form action="/cart/add" method="post">
+                <form action="/products/add" method="post">
                     {% for sku in skus %}
                         <input type="hidden" name="sku_id" value="{{ sku.id }}">
                     {% endfor %}
                     <div class="form-group">
                         <label for="quantity">Quantity:</label>
                         <input type="number" name="quantity" id="quantity" value="1" min="1" class="form-control" style="width:100px;">
+                        <input type="hidden" name="product_id" value="{{product.id}}">
                     </div>
                     <button type="submit" class="btn btn-primary">
                         <i class="icon-shopping-cart"></i> Add to Cart

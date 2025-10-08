@@ -13,7 +13,7 @@ app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 # shop
 app.mount("/static", StaticFiles(directory="app/static/shop"), name="static")
 app.include_router(home.router)
-app.include_router(products.router)
+app.include_router(products.router, prefix="/products", tags=["products"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(cart.router, prefix="/cart", tags=["cart"])

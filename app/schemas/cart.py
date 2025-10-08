@@ -29,17 +29,3 @@ class UpdateCartForm(QuantityInfo):
         return cls(
             quantity=quantity,
         )
-
-
-class AddToCartForm(SkuInfo, QuantityInfo):
-
-    @classmethod
-    def as_form(
-        cls,
-        sku_id: int = Form(...),
-        quantity: int = Form(...),
-    ):
-        return cls(
-            sku_id=sku_id,
-            quantity=quantity,
-        )

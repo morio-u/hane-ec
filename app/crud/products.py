@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.models import Product, Sku
 
 
-def get_all_products(db: Session) -> Optional[Product]:
+def get_all_products(db: Session) -> List[Product]:
     """
     Retrieves all products from the database.
 
@@ -11,7 +11,7 @@ def get_all_products(db: Session) -> Optional[Product]:
         db (Session): The active SQLAlchemy database session.
 
     Returns:
-        Optional[List[Product]]: A list of all Product records, or None if no products are found.
+        List[Product]: A list of all Product records (empty list if none found).
     """
     return db.query(Product).all()
 
@@ -30,7 +30,7 @@ def get_product_by_id(product_id: int, db: Session) -> Optional[Product]:
     return db.query(Product).filter(Product.id == product_id).first()
 
 
-def get_skus_by_id(product_id: int, db: Session) -> Optional[List[Sku]]:
+def get_skus_by_id(product_id: int, db: Session) -> List[Sku]:
     """
     Retrieves all SKUs associated with a given product ID.
 
@@ -39,11 +39,10 @@ def get_skus_by_id(product_id: int, db: Session) -> Optional[List[Sku]]:
         db (Session): The SQLAlchemy database session.
 
     Returns:
-        Optional[List[Sku]]: A list of SKUs for the given product,
-                             or None if the product does not exist.
+        List[Sku]: A list of SKUs for the given product (empty if not found).
     """
     product = get_product_by_id(product_id, db)
     if product is None:
-        return None
+        return []
 
     return product.skus

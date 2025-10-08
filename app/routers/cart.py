@@ -6,7 +6,6 @@ from fastapi.templating import Jinja2Templates
 from app.core.cookie import template_with_cookie
 from app.core.exception import RedirectHomeException
 from app.crud.cart import (
-    process_add_to_cart,
     process_remove_from_cart,
     process_update_cart,
     process_view_cart,
@@ -18,8 +17,7 @@ from app.dependencies.session import (
     get_or_create_session_token,
 )
 from app.models.user import User
-from app.schemas.cart import AddToCartForm, UpdateCartForm
-from app.validators.cart import validate_add_to_cart
+from app.schemas.cart import UpdateCartForm
 
 import logging
 
@@ -42,12 +40,14 @@ def view_cart(
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
 
     try:
+        # Retrieve and prepare the user's cart data for display, including cart summary and subtotal.
         cart_summary, subtotal_amount = process_view_cart(
             user=user,
             session_token=session_token,
             db=db,
         )
 
+        # Render the cart template and set the session cookie.
         response = template_with_cookie(
             user,
             cart_summary,
@@ -64,42 +64,6 @@ def view_cart(
     return response
 
 
-@router.post("/add")
-def add_to_cart(
-    request: Request,
-    form: AddToCartForm = Depends(AddToCartForm.as_form),
-    session_token: str = Depends(get_or_create_session_token),
-    db: Session = Depends(get_db),
-    user: Optional[User] = Depends(get_current_user),
-):
-    # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-    try:
-        errors = validate_add_to_cart(
-            sku_id=form.sku_id,
-            quantity=form.quantity,
-            db=db,
-        )
-
-        if errors:
-            request.session["errors"] = errors
-            return RedirectResponse(url="/cart", status_code=303)
-
-        process_add_to_cart(
-            sku_id=form.sku_id,
-            quantity=form.quantity,
-            user=user,
-            session_token=session_token,
-            db=db,
-        )
-    except RedirectHomeException as e:
-        raise RedirectHomeException("Invalid SKU or other cart error") from e
-    except Exception as e:
-        logger.exception(f"Unexpected error in add_to_cart: {e}")
-        raise RedirectHomeException("Unexpected error")
-
-    return RedirectResponse(url="/cart", status_code=303)
-
-
 @router.post("/update/{sku_id}")
 def update_cart(
     sku_id: int,
@@ -111,6 +75,7 @@ def update_cart(
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
 
     try:
+        # Update the quantity of an existing cart item in the user's cart.
         process_update_cart(
             sku_id=sku_id,
             quantity=form.quantity,
@@ -121,6 +86,7 @@ def update_cart(
     except RedirectHomeException as e:
         raise RedirectHomeException("Invalid SKU or other cart error") from e
     except Exception as e:
+        # For traceback
         logger.exception(f"Unexpected error in add_to_cart: {e}")
         raise RedirectHomeException("Unexpected error")
 
@@ -137,6 +103,7 @@ def remove_from_cart(
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
 
     try:
+        # Remove a SKU from the user's cart.
         process_remove_from_cart(
             sku_id=sku_id,
             user=user,
@@ -146,6 +113,7 @@ def remove_from_cart(
     except RedirectHomeException as e:
         raise RedirectHomeException("Invalid SKU or other cart error") from e
     except Exception as e:
+        # For traceback
         logger.exception(f"Unexpected error in add_to_cart: {e}")
         raise RedirectHomeException("Unexpected error")
 
