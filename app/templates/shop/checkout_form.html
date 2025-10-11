@@ -9,6 +9,15 @@
                 <p>Please enter your shipping and payment details below.</p>
             </div>
         </div>
+    {% if errors %}
+        <div class="alert alert-danger" style="text-align: left;">
+            <ul class="mb-3">
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
         <div class="row animate-box">
             <div class="col-md-6 col-md-offset-3 col-xs-10 col-xs-offset-1">
                 <form action="/checkout/confirm" method="post" class="form-horizontal">
@@ -38,7 +47,12 @@
                     </div>
                     <div class="form-group">
                         <label for="shipping_state" class="sr-only">State</label>
-                        <input type="text" class="form-control" id="shipping_state" name="shipping_state" placeholder="State" required>
+                        <select class="form-control" id="shipping_state" name="shipping_state" required>
+                            <option value="">Select State</option>
+                        {% for key, name in states.items() %}
+                            <option value="{{ key }}">{{ name }}</option>
+                        {% endfor %}
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="shipping_zip" class="sr-only">ZIP Code</label>

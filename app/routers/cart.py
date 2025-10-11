@@ -36,7 +36,7 @@ def view_cart(
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
     errors: Optional[list[str]] = Depends(get_errors_from_session),
-):
+) -> Response:
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
 
     try:
@@ -71,7 +71,7 @@ def update_cart(
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
-):
+) -> RedirectResponse:
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
 
     try:
@@ -99,7 +99,7 @@ def remove_from_cart(
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
-):
+) -> RedirectResponse:
     # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
 
     try:

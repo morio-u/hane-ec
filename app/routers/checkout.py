@@ -1,9 +1,11 @@
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Union
 from sqlalchemy.orm import Session
+from starlette.templating import _TemplateResponse
 from fastapi import APIRouter, HTTPException, Request, Depends
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from app.core.exception import RedirectHomeException
 from app.crud.cart import (
     get_subtotal_amount,
     get_user_cart_with_items_and_skus,
@@ -16,14 +18,22 @@ from app.crud.checkout import (
 )
 from app.database import get_db
 from app.dependencies.auth import get_current_user
-from app.dependencies.session import get_or_create_session_token
+from app.dependencies.session import (
+    get_errors_from_session,
+    get_or_create_session_token,
+)
 from app.models.order import (
     OrderStatusEnum,
     PaymentStatusEnum,
     ShippingStatusEnum,
 )
 from app.models.user import User
-from app.schemas.checkout import CheckoutConfirmForm, CheckoutCompleteForm
+from app.schemas.checkout import CheckoutConfirmFormTmp, CheckoutCompleteFormTmp
+from app.utils.constants import get_us_states
+from app.validators.checkout import validate_checkout_confirm
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")
@@ -31,136 +41,165 @@ templates = Jinja2Templates(directory="app/templates/shop")
 
 @router.get("", response_class=HTMLResponse)
 def view_checkout_form(
-    request: Request, user: Optional[User] = Depends(get_current_user)
-):
+    request: Request,
+    user: Optional[User] = Depends(get_current_user),
+    errors: Optional[list[str]] = Depends(get_errors_from_session),
+) -> _TemplateResponse:
     return templates.TemplateResponse(
         "checkout_form.html",
-        {"request": request, "user": user},
+        {"request": request, "user": user, "states": get_us_states(), "errors": errors},
     )
 
 
-@router.post("/confirm", response_class=HTMLResponse)
+@router.post("/confirm", response_class=HTMLResponse, response_model=None)
 def checkout_confirm(
     request: Request,
-    form: CheckoutConfirmForm = Depends(CheckoutConfirmForm.as_form),
+    form: CheckoutConfirmFormTmp = Depends(CheckoutConfirmFormTmp.as_form),
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
-):
-    # TODO: Add validation
+) -> Union[_TemplateResponse, RedirectResponse]:
+    try:
+        # Validate
+        errors = validate_checkout_confirm(form=form, db=db)
 
-    # Retrieves the current user's cart with cart_items and skus.
-    # Returns None if no matching cart is found.
-    cart = get_user_cart_with_items_and_skus(db, user, session_token)
+        # If a validation error occurs, return it to the frontend for display.
+        if errors:
+            request.session["errors"] = errors
+            return RedirectResponse(url="/checkout", status_code=303)
 
-    if cart:
-        # Calculate the subtotal amount of all items in the cart.
-        subtotal_amount = get_subtotal_amount(cart)
-    else:
-        raise HTTPException(status_code=404, detail="Cart not found")
+        # Retrieves the current user's cart with cart_items and skus.
+        # Returns None if no matching cart is found.
+        cart = get_user_cart_with_items_and_skus(db, user, session_token)
 
-    # TODO: get target tax, use sample values temporally
-    # tax = get_tax()
-    tax_per = Decimal("0.1")
-    tax = subtotal_amount * tax_per
-    shipping_fee = Decimal("20.00")
-    total = subtotal_amount + shipping_fee + tax
+        if cart:
+            # Calculate the subtotal amount of all items in the cart.
+            subtotal_amount = get_subtotal_amount(cart)
+        else:
+            raise HTTPException(status_code=404, detail="Cart not found")
 
-    order = form.dict()
-    order.update(
-        {
-            "subtotal_amount": subtotal_amount,
-            "shipping_fee": shipping_fee,
-            "tax": tax,
-            "total": total,
-        }
-    )
+        # TODO: get target tax, use sample values temporally
+        # tax = get_tax()
+        tax_per = Decimal("0.1")
+        tax = subtotal_amount * tax_per
+        shipping_fee = Decimal("20.00")
+        total = subtotal_amount + shipping_fee + tax
+
+        order = form.model_dump()
+        order.update(
+            {
+                "subtotal_amount": subtotal_amount,
+                "shipping_fee": shipping_fee,
+                "tax": tax,
+                "total": total,
+            }
+        )
+    except Exception as e:
+        # For traceback
+        logger.exception(f"Unexpected error in add_to_cart: {e}")
+        raise RedirectHomeException("Unexpected error")
 
     return templates.TemplateResponse(
         "checkout_confirm.html", {"request": request, "order": order, "user": user}
     )
 
 
-@router.post("/complete", name="checkout_complete", response_class=HTMLResponse)
+@router.post(
+    "/complete",
+    name="checkout_complete",
+    response_class=HTMLResponse,
+    response_model=None,
+)
 def checkout_complete(
     request: Request,
-    form: CheckoutCompleteForm = Depends(CheckoutCompleteForm.as_form),
+    form: CheckoutCompleteFormTmp = Depends(CheckoutCompleteFormTmp.as_form),
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
-):
-    # TODO: Add validation
+) -> Union[_TemplateResponse, RedirectResponse]:
+    try:
+        # Validate
+        errors = validate_checkout_confirm(form=form, db=db)
 
-    # Retrieves the current user's cart with cart_items and skus.
-    # Returns None if no matching cart is found.
-    cart = get_user_cart_with_items_and_skus(db, user, session_token)
+        # If a validation error occurs, return it to the frontend for display.
+        if errors:
+            request.session["errors"] = errors
+            return RedirectResponse(url="/checkout", status_code=303)
 
-    if cart:
-        # Calculate the subtotal amount of all items in the cart.
-        subtotal_amount = get_subtotal_amount(cart)
-    else:
-        raise HTTPException(status_code=404, detail="Cart not found")
+        # Retrieves the current user's cart with cart_items and skus.
+        # Returns None if no matching cart is found.
+        cart = get_user_cart_with_items_and_skus(db, user, session_token)
 
-    # TODO: get target tax, use sample values temporally
-    # tax = get_tax()
-    tax_per = Decimal("0.1")
-    tax_amount = subtotal_amount * tax_per
-    shipping_fee = Decimal("20.00")
-    payment_processing_fee = Decimal("5.00")
-    total_amount = subtotal_amount + shipping_fee + tax_amount
+        if cart:
+            # Calculate the subtotal amount of all items in the cart.
+            subtotal_amount = get_subtotal_amount(cart)
+        else:
+            raise HTTPException(status_code=404, detail="Cart not found")
 
-    new_order = create_new_order(
-        db,
-        form.shipping_last_name,
-        form.shipping_first_name,
-        form.shipping_address_line1,
-        form.shipping_city,
-        form.shipping_state,
-        form.shipping_zip,
-        form.shipping_phone_number,
-        subtotal_amount,
-        tax_amount,
-        shipping_fee,
-        payment_processing_fee,
-        total_amount,
-        form.shipping_method,
-        OrderStatusEnum.confirmed,
-        ShippingStatusEnum.preparing,
-        PaymentStatusEnum.unpaid,
-        form.shipping_address_line2,
-        user.id if user and user.id else None,
-    )
+        # TODO: get target tax, use sample values temporally
+        # tax = get_tax()
+        tax_per = Decimal("0.1")
+        tax_amount = subtotal_amount * tax_per
+        shipping_fee = Decimal("20.00")
+        payment_processing_fee = Decimal("5.00")
+        total_amount = subtotal_amount + shipping_fee + tax_amount
 
-    # TODO: get target tax, use sample values temporally
-    transaction_token = "0123456789"
+        new_order = create_new_order(
+            db,
+            form.shipping_last_name,
+            form.shipping_first_name,
+            form.shipping_address_line1,
+            form.shipping_city,
+            form.shipping_state,
+            form.shipping_zip,
+            form.shipping_phone_number,
+            subtotal_amount,
+            tax_amount,
+            shipping_fee,
+            payment_processing_fee,
+            total_amount,
+            form.shipping_method,
+            OrderStatusEnum.confirmed,
+            ShippingStatusEnum.preparing,
+            PaymentStatusEnum.unpaid,
+            form.shipping_address_line2,
+            user.id if user and user.id else None,
+        )
 
-    if new_order.id:
-        try:
-            # Create OrderItem records in the database based on the items in the given cart
-            # and associate them with the specified order ID.
-            new_order_items = create_new_order_item(new_order.id, cart, db)
-            if not new_order_items:
-                raise HTTPException(status_code=404, detail="Order not found")
+        # TODO: get target tax, use sample values temporally
+        transaction_token = "0123456789"
 
-            # Create a new payment record and persist it in the database.
-            new_payment = create_new_payment(
-                new_order.id,
-                form.payment_method,
-                PaymentStatusEnum.unpaid,
-                transaction_token,
-                db,
-                user.id if user and user.id else None,
-            )
-            if not new_payment:
-                raise HTTPException(status_code=404, detail="Order not found")
+        if new_order.id:
+            try:
+                # Create OrderItem records in the database based on the items in the given cart
+                # and associate them with the specified order ID.
+                new_order_items = create_new_order_item(new_order.id, cart, db)
+                if not new_order_items:
+                    raise HTTPException(status_code=404, detail="Order not found")
 
-            # Deletes the specified cart from the database.
-            delete_cart(cart, db)
-        except Exception as e:
-            db.rollback()
-            raise e
-    else:
-        raise HTTPException(status_code=404, detail="Order not found")
+                # Create a new payment record and persist it in the database.
+                new_payment = create_new_payment(
+                    new_order.id,
+                    form.payment_method,
+                    PaymentStatusEnum.unpaid,
+                    transaction_token,
+                    db,
+                    user.id if user and user.id else None,
+                )
+                if not new_payment:
+                    raise HTTPException(status_code=404, detail="Order not found")
+
+                # Deletes the specified cart from the database.
+                delete_cart(cart, db)
+            except Exception as e:
+                db.rollback()
+                raise e
+        else:
+            raise HTTPException(status_code=404, detail="Order not found")
+    except Exception as e:
+        # For traceback
+        logger.exception(f"Unexpected error in add_to_cart: {e}")
+        raise RedirectHomeException("Unexpected error")
 
     return templates.TemplateResponse(
         "checkout_complete.html",

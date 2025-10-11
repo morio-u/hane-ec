@@ -1,6 +1,7 @@
-from typing import Optional
-from fastapi import APIRouter, HTTPException, Request, Depends ,Form
+from typing import Optional, Union
+from starlette.templating import _TemplateResponse
 from sqlalchemy.orm import Session
+from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.core.exception import RedirectHomeException
@@ -29,7 +30,7 @@ def get_products(
     request: Request,
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
-):
+) -> _TemplateResponse:
     try:
         # Retrieves all products from the database.
         products = get_all_products(db)
@@ -43,14 +44,14 @@ def get_products(
     )
 
 
-@router.get("/{product_id}", response_class=HTMLResponse)
+@router.get("/{product_id}", response_class=HTMLResponse, response_model=None)
 def get_product_detail(
     request: Request,
     product_id: int,
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
     errors: Optional[list[str]] = Depends(get_errors_from_session),
-):
+) -> Union[_TemplateResponse, RedirectResponse]:
     try:
         # Retrieves a product from the database by its ID.
         product = get_product_by_id(product_id, db)
@@ -69,7 +70,13 @@ def get_product_detail(
 
     return templates.TemplateResponse(
         "product_detail.html",
-        {"request": request, "product": product, "skus": skus, "user": user, "errors": errors},
+        {
+            "request": request,
+            "product": product,
+            "skus": skus,
+            "user": user,
+            "errors": errors,
+        },
     )
 
 
@@ -80,15 +87,10 @@ def add_to_cart(
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
-):
+) -> RedirectResponse:
     try:
         # Validate if the SKU exists and the quantity is acceptable for adding to the cart.
-        errors = validate_add_to_cart(
-            sku_id=form.sku_id,
-            quantity=form.quantity,
-            product_id=form.product_id,
-            db=db,
-        )
+        errors = validate_add_to_cart(form=form, db=db)
 
         # If a validation error occurs, return it to the frontend for display.
         if errors:

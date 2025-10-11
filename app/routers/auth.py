@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Dict
+from starlette.templating import _TemplateResponse
 from fastapi import APIRouter, HTTPException, Request, status, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -14,7 +14,7 @@ templates = Jinja2Templates(directory="app/templates/shop")
 
 
 @router.get("/login", response_class=HTMLResponse)
-def read_login_form(request: Request):
+def read_login_form(request: Request) -> _TemplateResponse:
     return templates.TemplateResponse("login.html", {"request": request})
 
 
@@ -24,7 +24,7 @@ def login(
     # TODO: Move to OAuth2PasswordRequestLoginForm
     email: str = Form(...),
     password: str = Form(...),
-) -> Dict[str, str]:
+) -> RedirectResponse:
     """
     Login Processing
     Receives form_data.email / form_data.password,
@@ -54,14 +54,14 @@ def login(
 
 
 @router.get("/logout")
-def logout():
+def logout() -> RedirectResponse:
     redirect = RedirectResponse(url="/", status_code=303)
     redirect.delete_cookie(key="access_token")
     return redirect
 
 
 @router.get("/signup", response_class=HTMLResponse)
-def read_signup_form(request: Request):
+def read_signup_form(request: Request) -> _TemplateResponse:
     return templates.TemplateResponse("signup.html", {"request": request})
 
 
@@ -77,7 +77,7 @@ def signup(
     password: str = Form(...),
     confirm_password: str = Form(...),
     is_send_newsletter: bool = Form(False),
-):
+) -> RedirectResponse:
     if password != confirm_password:
         raise HTTPException(status_code=400, detail="Passwords do not match")
 
