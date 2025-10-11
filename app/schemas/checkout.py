@@ -145,7 +145,7 @@ class CheckoutConfirmFormTmp(ShippingInfoTmp, PaymentInfoTmp):
         )
 
 
-class CheckoutCompleteFormTmp(ShippingInfoTmp):
+class CheckoutCompleteFormTmp(ShippingInfoTmp, PaymentInfoTmp):
     payment_method: Optional[str] = None
 
     @classmethod
@@ -161,6 +161,9 @@ class CheckoutCompleteFormTmp(ShippingInfoTmp):
         shipping_phone_number: Optional[str] = Form(None),
         shipping_method: Optional[str] = Form(None),
         payment_method: Optional[str] = Form(None),
+        card_number: Optional[str] = Form(None),
+        card_name: Optional[str] = Form(None),
+        card_cvv: Optional[str] = Form(None),
     ):
         return cls(
             shipping_last_name=shipping_last_name,
@@ -173,4 +176,7 @@ class CheckoutCompleteFormTmp(ShippingInfoTmp):
             shipping_phone_number=shipping_phone_number,
             shipping_method=shipping_method,
             payment_method=payment_method,
+            card_number=card_number,
+            card_name=card_name,
+            card_cvv=card_cvv,
         )
