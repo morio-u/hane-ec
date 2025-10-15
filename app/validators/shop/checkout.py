@@ -1,6 +1,6 @@
 from typing import List
 from sqlalchemy.orm import Session
-from app.schemas.checkout import CheckoutConfirmForm
+from app.schemas.shop.checkout import CheckoutConfirmForm
 
 
 def validate_checkout_confirm(form: CheckoutConfirmForm, db: Session) -> List[str]:

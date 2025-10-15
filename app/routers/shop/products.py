@@ -5,17 +5,17 @@ from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.core.exception import RedirectHomeException
-from app.crud.cart import process_add_to_cart
-from app.crud.products import get_all_products, get_product_by_id, get_skus_by_id
-from app.database import get_db
+from app.crud.shop.cart import process_add_to_cart
+from app.crud.shop.products import get_all_products, get_product_by_id, get_skus_by_id
+from app.core.database import get_db
 from app.dependencies.auth import get_current_user
 from app.dependencies.session import (
     get_errors_from_session,
     get_or_create_session_token,
 )
-from app.models.user import User
-from app.validators.products import validate_add_to_cart
-from app.schemas.products import AddToCartForm
+from app.models.shop.user import User
+from app.validators.shop.products import validate_add_to_cart
+from app.schemas.shop.products import AddToCartForm
 import logging
 
 logger = logging.getLogger(__name__)

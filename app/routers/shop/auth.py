@@ -6,8 +6,8 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.core.jwt import create_access_token
 from app.core.config import settings
-from app.crud.user import authenticate_user, create_user, get_user_by_email
-from app.database import get_db
+from app.crud.shop.user import authenticate_user, create_user, get_user_by_email
+from app.core.database import get_db
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/shop")

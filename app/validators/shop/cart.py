@@ -1,11 +1,9 @@
 from typing import List
 from sqlalchemy.orm import Session
-from app.crud.products import get_product_by_id
-from app.crud.sku import get_sku_by_id
-from app.schemas.products import AddToCartForm
+from app.crud.shop.sku import get_sku_by_id
 
 
-def validate_add_to_cart(form: AddToCartForm, db: Session) -> List[str]:
+def validate_add_to_cart(sku_id: int, quantity: int, db: Session) -> List[str]:
     """
     Validate if the SKU exists and the quantity is acceptable for adding to the cart.
 
@@ -19,16 +17,15 @@ def validate_add_to_cart(form: AddToCartForm, db: Session) -> List[str]:
     """
     errors = []
 
-    product = get_product_by_id(form.product_id, db)
-    sku = get_sku_by_id(form.sku_id, db)
+    sku = get_sku_by_id(sku_id, db)
 
-    if product is None or sku is None:
-        errors.append("Product not found.")
+    if sku is None:
+        errors.append("The specified product was not found.")
 
-    if not (1 <= form.quantity <= 2):
+    if not (1 <= quantity <= 2):
         errors.append("Quantity must be between 1 and 2.")
 
-    if form.quantity > sku.stock_quantity:
+    if quantity > sku.stock_quantity:
         errors.append("The requested quantity exceeds available stock.")
 
     return errors

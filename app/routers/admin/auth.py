@@ -11,7 +11,7 @@ from app.crud.admin.user import (
     create_admin_user,
     get_admin_user_by_email,
 )
-from app.database import get_db
+from app.core.database import get_db
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates/admin")

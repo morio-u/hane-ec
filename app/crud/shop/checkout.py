@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from app.models import (
+from app.models.shop import (
     Cart,
     Order,
     OrderItem,

@@ -1,6 +1,6 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from app.models import Product, Sku
+from app.models.shop import Product, Sku
 
 
 def get_all_products(db: Session) -> List[Product]:

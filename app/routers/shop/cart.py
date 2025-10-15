@@ -5,19 +5,19 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.core.cookie import template_with_cookie
 from app.core.exception import RedirectHomeException
-from app.crud.cart import (
+from app.crud.shop.cart import (
     process_remove_from_cart,
     process_update_cart,
     process_view_cart,
 )
-from app.database import get_db
+from app.core.database import get_db
 from app.dependencies.auth import get_current_user
 from app.dependencies.session import (
     get_errors_from_session,
     get_or_create_session_token,
 )
-from app.models.user import User
-from app.schemas.cart import UpdateCartForm
+from app.models.shop import User
+from app.schemas.shop.cart import UpdateCartForm
 
 import logging
 
@@ -37,8 +37,6 @@ def view_cart(
     user: Optional[User] = Depends(get_current_user),
     errors: Optional[list[str]] = Depends(get_errors_from_session),
 ) -> Response:
-    # TODO: Add validation, Get Product's price etc.. from DB, Caliculate Tax
-
     try:
         # Retrieve and prepare the user's cart data for display, including cart summary and subtotal.
         cart_summary, subtotal_amount = process_view_cart(

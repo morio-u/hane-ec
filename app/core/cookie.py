@@ -4,7 +4,7 @@ from fastapi import Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.core.config import settings
-from app.models.user import User
+from app.models.shop.user import User
 
 
 def set_template_response(

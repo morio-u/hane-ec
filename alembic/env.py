@@ -6,10 +6,11 @@ from sqlalchemy import pool
 from alembic import context
 
 # Import my SQLAlchemy Base
-from app.database import Base
+from app.core.database import Base
 
 # Import models
-from app.models import *
+from app.models.shop import *
+from app.models.admin import *
 
 # Get DATABASE_URL
 from app.core.config import settings

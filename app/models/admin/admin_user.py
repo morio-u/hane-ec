@@ -9,8 +9,8 @@ from sqlalchemy import (
     TIMESTAMP,
 )
 from sqlalchemy.sql import func
-from app.database import Base
-from app.models.user import UserStatusEnum
+from app.core.database import Base
+from app.models.shop.user import UserStatusEnum
 
 
 class AdminUserStatusEnum(str, Enum):

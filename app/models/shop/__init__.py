@@ -16,4 +16,3 @@ from .order_item import OrderItem
 from .payment import Payment, PaymentStatusEnum
 from .cart import Cart
 from .cart_item import CartItem
-from .admin.admin_user import AdminUser

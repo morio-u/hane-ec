@@ -3,11 +3,11 @@ from typing import Optional
 from fastapi import Request, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from app.database import get_db
+from app.core.database import get_db
 from app.core.config import settings
-from app.crud.user import get_user_by_email
+from app.crud.shop.user import get_user_by_email
 from app.crud.admin.user import get_admin_user_by_email
-from app.models.user import User
+from app.models.shop.user import User
 from app.models.admin.admin_user import AdminUser
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")

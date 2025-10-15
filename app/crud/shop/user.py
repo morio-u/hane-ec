@@ -2,7 +2,7 @@ from typing import Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.core.security import get_password_hash, verify_password
-from app.models.user import User
+from app.models.shop.user import User
 from app.utils.constants import clean_phone_number
 
 

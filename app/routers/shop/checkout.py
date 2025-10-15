@@ -6,31 +6,31 @@ from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.core.exception import RedirectHomeException
-from app.crud.cart import (
+from app.crud.shop.cart import (
     get_subtotal_amount,
     get_user_cart_with_items_and_skus,
 )
-from app.crud.checkout import (
+from app.crud.shop.checkout import (
     create_new_order,
     create_new_order_item,
     create_new_payment,
     delete_cart,
 )
-from app.database import get_db
+from app.core.database import get_db
 from app.dependencies.auth import get_current_user
 from app.dependencies.session import (
     get_errors_from_session,
     get_or_create_session_token,
 )
-from app.models.order import (
+from app.models.shop.order import (
     OrderStatusEnum,
     PaymentStatusEnum,
     ShippingStatusEnum,
 )
-from app.models.user import User
-from app.schemas.checkout import CheckoutConfirmFormTmp, CheckoutCompleteFormTmp
+from app.models.shop.user import User
+from app.schemas.shop.checkout import CheckoutConfirmFormTmp, CheckoutCompleteFormTmp
 from app.utils.constants import get_us_states
-from app.validators.checkout import validate_checkout_confirm
+from app.validators.shop.checkout import validate_checkout_confirm
 import logging
 
 logger = logging.getLogger(__name__)
