@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     SESSION_TOKEN_EXPIRE_SECONDS: int
     DEBUG: bool = False
     TOKEN_TYPE: str = "bearer"
+    ADMIN_SECRET_KEY: str
 
     class Config:
         env_file = ".env"

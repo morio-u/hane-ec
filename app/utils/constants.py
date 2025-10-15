@@ -1,3 +1,20 @@
+import re
+
+
+def clean_phone_number(phone_number: str) -> str:
+    """
+    Removes all non-numeric characters from a phone number.
+
+    Parameters:
+        phone_number (str): The input phone number string.
+
+    Returns:
+        str: A cleaned phone number containing only digits.
+    """
+    # Regular expression to remove non-numeric characters
+    return re.sub(r"\D", "", phone_number)
+
+
 def get_us_states() -> dict[str, str]:
     """
     Return a dictionary of U.S. mainland states (excluding Alaska, Hawaii, and territories).

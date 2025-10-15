@@ -1,0 +1,8 @@
+<form method="post" action="/admin/auth/login">
+  <label>email:</label>
+  <input type="text" name="email" />
+  <label>Password:</label>
+  <input type="password" name="password" />
+  <button type="submit">Login</button>
+  {% if error %}<p style="color:red;">{{ error }}</p>{% endif %}
+</form>

@@ -1,9 +1,9 @@
-import re
 from typing import Optional
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.core.security import get_password_hash, verify_password
 from app.models.user import User
-from sqlalchemy import func
+from app.utils.constants import clean_phone_number
 
 
 def get_user_by_email(db: Session, input_email: str) -> Optional[User]:
@@ -18,20 +18,6 @@ def get_user_by_email(db: Session, input_email: str) -> Optional[User]:
         Optional[User]: The user if found, otherwise None.
     """
     return db.query(User).filter(func.lower(User.email) == input_email.lower()).first()
-
-
-def clean_phone_number(phone_number: str) -> str:
-    """
-    Removes all non-numeric characters from a phone number.
-
-    Parameters:
-        phone_number (str): The input phone number string.
-
-    Returns:
-        str: A cleaned phone number containing only digits.
-    """
-    # Regular expression to remove non-numeric characters
-    return re.sub(r"\D", "", phone_number)
 
 
 def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
@@ -63,7 +49,7 @@ def create_user(
     email: str,
     password: str,
     is_send_newsletter: bool,
-):
+) -> User:
     """
     Creates and saves a new user in the database.
 

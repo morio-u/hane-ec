@@ -9,9 +9,6 @@ build:
 down:
 	$(DC) down
 
-down-vol:
-	$(DC) down --volumes
-
 start:
 	$(DC) start
 
