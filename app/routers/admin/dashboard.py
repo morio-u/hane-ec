@@ -15,8 +15,3 @@ def dashboard(
     request: Request, user: Optional[AdminUser] = Depends(get_current_admin_user)
 ) -> _TemplateResponse:
     return templates.TemplateResponse("index.html", {"request": request, "user": user})
-
-
-@router.get("/ui-carousel.html", response_class=HTMLResponse)
-async def ui_carousel(request: Request):
-    return templates.TemplateResponse("ui-carousel.html", {"request": request})
