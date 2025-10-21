@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from app.core.config import settings
 from app.routers.shop import home, products, auth, users, cart, checkout
-from app.routers.admin import dashboard, auth as admin_auth
+from app.routers.admin import auth as admin_auth, dashboard, products as admin_products
 from app.core.exception import RedirectHomeException
 from app.core.exception_handler import redirect_home_handler
 
@@ -26,3 +26,4 @@ app.mount(
 )
 app.include_router(admin_auth.router, prefix="/admin/auth", tags=["auth"])
 app.include_router(dashboard.router, prefix="/admin", tags=["admin"])
+app.include_router(admin_products.router, prefix="/admin/products", tags=["products"])
