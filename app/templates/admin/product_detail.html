@@ -1,0 +1,171 @@
+{% extends "base_admin.html" %}
+{% block content %}
+
+<div class="layout-page">
+    <div class="container-xxl flex-grow-1 container-p-y">
+
+    <!-- Page Title -->
+    <h4 class="fw-bold py-3 mb-4">
+        <span class="text-muted fw-light">Products /</span> Edit Product
+    </h4>
+
+    <!-- Product Edit Form -->
+    <form method="POST" action="">
+
+        <!-- Product Info Card -->
+        <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Product Information</h5>
+        </div>
+        <div class="card-body">
+
+            <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Internal Part Number</label>
+                <input type="text" class="form-control" name="internal_part_number"
+                    value="{{ product.internal_part_number }}" readonly>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Manufacturer Part Number</label>
+                <input type="text" class="form-control" name="manufacturer_part_number"
+                    value="{{ product.manufacturer_part_number or '' }}">
+            </div>
+            </div>
+
+            <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Product Name</label>
+                <input type="text" class="form-control" name="name" value="{{ product.name }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Brand</label>
+                <select class="form-select" name="brand_id">
+                {% for brand in brands %}
+                <option value="{{ brand.id }}" {% if brand.id == product.brand_id %}selected{% endif %}>
+                    {{ brand.name }}
+                </option>
+                {% endfor %}
+                </select>
+            </div>
+            </div>
+
+            <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Subcategory</label>
+                <select class="form-select" name="subcategory_id">
+                {% for subcat in subcategories %}
+                <option value="{{ subcat.id }}" {% if subcat.id == product.subcategory_id %}selected{% endif %}>
+                    {{ subcat.name }}
+                </option>
+                {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Purchase Type</label>
+                <select class="form-select" name="purchase_type">
+                {% for type in purchase_types %}
+                <option value="{{ type }}" {% if type == product.purchase_type %}selected{% endif %}>
+                    {{ type }}
+                </option>
+                {% endfor %}
+                </select>
+            </div>
+            </div>
+
+            <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">Price (excl. tax)</label>
+                <input type="number" step="0.01" class="form-control" name="price_excluding_tax"
+                    value="{{ product.price_excluding_tax or '' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Cost Price</label>
+                <input type="number" step="0.01" class="form-control" name="cost_price"
+                    value="{{ product.cost_price or '' }}">
+            </div>
+            </div>
+
+            <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description" rows="3">{{ product.description or '' }}</textarea>
+            </div>
+
+            <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" name="status">
+                {% for s in product.status %}
+                <option value="{{ s }}" {% if s == product.status %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+            </div>
+        </div>
+        </div>
+
+        <!-- SKU List -->
+        <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">SKUs</h5>
+            <button type="button" class="btn btn-primary btn-sm">+ Add SKU</button>
+        </div>
+
+        <div class="table-responsive text-nowrap">
+            <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                <th>Barcode</th>
+                <th>Color</th>
+                <th>Size</th>
+                <th>Stock Qty</th>
+                <th>Special Price</th>
+                <th>Status</th>
+                <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sku in skus %}
+                <tr>
+                <td><input type="text" class="form-control" name="skus[{{ sku.id }}][barcode]" value="{{ sku.barcode }}"></td>
+                <td>
+                    <select class="form-select" name="skus[{{ sku.id }}][color_id]">
+                    {% for color in colors %}
+                    <option value="{{ color.id }}" {% if color.id == sku.color_id %}selected{% endif %}>{{ color.name }}</option>
+                    {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <select class="form-select" name="skus[{{ sku.id }}][size_id]">
+                    {% for size in sizes %}
+                    <option value="{{ size.id }}" {% if size.id == sku.size_id %}selected{% endif %}>{{ size.name }}</option>
+                    {% endfor %}
+                    </select>
+                </td>
+                <td><input type="number" class="form-control" name="skus[{{ sku.id }}][stock_quantity]" value="{{ sku.stock_quantity }}"></td>
+                <td><input type="number" step="0.01" class="form-control" name="skus[{{ sku.id }}][special_price]" value="{{ sku.special_price or '' }}"></td>
+                <td>
+                    <select class="form-select" name="skus[{{ sku.id }}][status]">
+                    {% for st in sku_statuses %}
+                    <option value="{{ st }}" {% if st == sku.status %}selected{% endif %}>{{ st }}</option>
+                    {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-icon btn-outline-danger">
+                    <i class="bx bx-trash"></i>
+                    </button>
+                </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        </div>
+        </div>
+
+        <div class="text-end">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+
+    </form>
+    </div>
+</div>
+
+{% endblock %}
