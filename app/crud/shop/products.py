@@ -106,7 +106,7 @@ def get_products_with_quantity(product_ids: int, db: Session) -> List[Product]:
     stock_subquery = (
         db.query(
             Sku.product_id.label("product_id"),
-            func.coalesce(func.sum(Sku.stock_quantity), 0).label("total_quantity")
+            func.coalesce(func.sum(Sku.stock_quantity), 0).label("total_quantity"),
         )
         .filter(Sku.product_id.in_(product_ids))
         .group_by(Sku.product_id)

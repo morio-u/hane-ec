@@ -20,56 +20,57 @@
         <div class="card-body">
 
             <div class="row mb-3">
-            <div class="col-md-6">
-                <label class="form-label">Internal Part Number</label>
-                <input type="text" class="form-control" name="internal_part_number"
-                    value="{{ product.internal_part_number }}" readonly>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Manufacturer Part Number</label>
-                <input type="text" class="form-control" name="manufacturer_part_number"
-                    value="{{ product.manufacturer_part_number or '' }}">
-            </div>
-            </div>
-
-            <div class="row mb-3">
-            <div class="col-md-6">
-                <label class="form-label">Product Name</label>
-                <input type="text" class="form-control" name="name" value="{{ product.name }}">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Brand</label>
-                <select class="form-select" name="brand_id">
-                {% for brand in brands %}
-                <option value="{{ brand.id }}" {% if brand.id == product.brand_id %}selected{% endif %}>
-                    {{ brand.name }}
-                </option>
-                {% endfor %}
-                </select>
-            </div>
+                <div class="col-md-6">
+                    <label class="form-label">Internal Part Number</label>
+                    <input type="text" class="form-control" name="internal_part_number"
+                        value="{{ product.internal_part_number }}" readonly>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Manufacturer Part Number</label>
+                    <input type="text" class="form-control" name="manufacturer_part_number"
+                        value="{{ product.manufacturer_part_number or '' }}">
+                </div>
             </div>
 
             <div class="row mb-3">
-            <div class="col-md-6">
-                <label class="form-label">Subcategory</label>
-                <select class="form-select" name="subcategory_id">
-                {% for subcat in subcategories %}
-                <option value="{{ subcat.id }}" {% if subcat.id == product.subcategory_id %}selected{% endif %}>
-                    {{ subcat.name }}
-                </option>
-                {% endfor %}
-                </select>
+                <div class="col-md-6">
+                    <label class="form-label">Product Name</label>
+                    <input type="text" class="form-control" name="name" value="{{ product.name }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Brand</label>
+                    <select class="form-select" name="brand_id">
+                    {% for brand in brands %}
+                    <option value="{{ brand.id }}" {% if brand.id == product.brand_id %}selected{% endif %}>
+                        {{ brand.name }}
+                    </option>
+                    {% endfor %}
+                    </select>
+                </div>
             </div>
-            <div class="col-md-6">
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Subcategory</label>
+                    <select class="form-select" name="subcategory_id">
+                    {% for subcat in subcategories %}
+                    <option value="{{ subcat.id }}" {% if subcat.id == product.subcategory_id %}selected{% endif %}>
+                        {{ subcat.name }}
+                    </option>
+                    {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
                 <label class="form-label">Purchase Type</label>
                 <select class="form-select" name="purchase_type">
-                {% for type in purchase_types %}
-                <option value="{{ type }}" {% if type == product.purchase_type %}selected{% endif %}>
-                    {{ type }}
-                </option>
-                {% endfor %}
+                    {% for type in PurchaseTypeEnum %}
+                    <option value="{{ type.value }}" 
+                            {% if product.purchase_type == type %}selected{% endif %}>
+                        {{ type.name }}
+                    </option>
+                    {% endfor %}
                 </select>
-            </div>
+                </div>
             </div>
 
             <div class="row mb-3">
@@ -93,8 +94,8 @@
             <div class="mb-3">
             <label class="form-label">Status</label>
             <select class="form-select" name="status">
-                {% for s in product.status %}
-                <option value="{{ s }}" {% if s == product.status %}selected{% endif %}>{{ s }}</option>
+                {% for status in ProductStatusEnum %}
+                <option value="{{ status.value }}" {% if status == product.status %}selected{% endif %}>{{ status.name }}</option>
                 {% endfor %}
             </select>
             </div>
@@ -143,8 +144,8 @@
                 <td><input type="number" step="0.01" class="form-control" name="skus[{{ sku.id }}][special_price]" value="{{ sku.special_price or '' }}"></td>
                 <td>
                     <select class="form-select" name="skus[{{ sku.id }}][status]">
-                    {% for st in sku_statuses %}
-                    <option value="{{ st }}" {% if st == sku.status %}selected{% endif %}>{{ st }}</option>
+                    {% for status in SkuStatusEnum %}
+                    <option value="{{ status.value }}" {% if status == sku.status %}selected{% endif %}>{{ status.name }}</option>
                     {% endfor %}
                     </select>
                 </td>

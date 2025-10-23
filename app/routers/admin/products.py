@@ -6,10 +6,18 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.core.database import get_db
 from app.core.exception import RedirectHomeException
-from app.crud.shop.products import get_all_products, get_product_by_id, get_products_with_quantity, get_skus_by_id
+from app.crud.common.masters import get_all_brands, get_all_colors, get_all_sizes
+from app.crud.shop.products import (
+    get_all_products,
+    get_product_by_id,
+    get_products_with_quantity,
+    get_skus_by_id,
+)
 from app.dependencies.auth import get_current_admin_user
 from app.dependencies.session import get_errors_from_session
 from app.models.admin.admin_user import AdminUser
+from app.models.shop.product import ProductStatusEnum, PurchaseTypeEnum
+from app.models.shop.sku import SkuStatusEnum
 import logging
 
 logger = logging.getLogger(__name__)
@@ -37,7 +45,8 @@ def get_products(
         raise RedirectHomeException("Unexpected error")
 
     return templates.TemplateResponse(
-        "products.html", {"request": request, "products": products_with_qty, "user": user}
+        "products.html",
+        {"request": request, "products": products_with_qty, "user": user},
     )
 
 
@@ -56,6 +65,10 @@ def get_product_detail(
         # Retrieves all SKUs associated with a given product ID.
         skus = get_skus_by_id(product_id, db)
 
+        brands = get_all_brands(db)
+        colors = get_all_colors(db)
+        sizes = get_all_sizes(db)
+
         if product is None or skus is None:
             # For traceback
             logger.exception(f"Product not found: {product_id}")
@@ -72,6 +85,12 @@ def get_product_detail(
             "product": product,
             "skus": skus,
             "user": user,
+            "brands": brands,
+            "colors": colors,
+            "sizes": sizes,
+            "ProductStatusEnum": ProductStatusEnum,
+            "PurchaseTypeEnum": PurchaseTypeEnum,
+            "SkuStatusEnum": SkuStatusEnum,
             "errors": errors,
         },
     )
