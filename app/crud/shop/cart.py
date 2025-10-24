@@ -3,7 +3,7 @@ from typing import Any, List, Dict, Optional
 from sqlalchemy.orm import Session, joinedload
 from app.core.exception import RedirectHomeException
 from app.crud.shop.sku import get_sku_by_id
-from app.models.shop import Cart, CartItem, Sku, User
+from app.models import Cart, CartItem, Sku, User
 
 
 def get_cart_query(

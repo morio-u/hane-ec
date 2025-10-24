@@ -2,7 +2,7 @@ from typing import Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.core.security import get_password_hash, verify_password
-from app.models.admin.admin_user import AdminUser
+from app.models.admin_user import AdminUser
 
 
 def get_admin_user_by_email(db: Session, input_email: str) -> Optional[AdminUser]:

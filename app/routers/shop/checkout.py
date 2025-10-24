@@ -22,12 +22,12 @@ from app.dependencies.session import (
     get_errors_from_session,
     get_or_create_session_token,
 )
-from app.models.shop.order import (
+from app.models.order import (
     OrderStatusEnum,
     PaymentStatusEnum,
     ShippingStatusEnum,
 )
-from app.models.shop.user import User
+from app.models.user import User
 from app.schemas.shop.checkout import CheckoutConfirmFormTmp, CheckoutCompleteFormTmp
 from app.utils.constants import get_us_states
 from app.validators.shop.checkout import validate_checkout_confirm

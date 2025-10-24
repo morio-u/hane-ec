@@ -13,7 +13,7 @@ from app.dependencies.session import (
     get_errors_from_session,
     get_or_create_session_token,
 )
-from app.models.shop.user import User
+from app.models.user import User
 from app.validators.shop.products import validate_add_to_cart
 from app.schemas.shop.products import AddToCartForm
 import logging

@@ -1,6 +1,6 @@
 from typing import List
 from sqlalchemy.orm import Session
-from app.models.shop import Brand, Color, Size
+from app.models import Brand, Color, Size
 
 
 def get_all_brands(db: Session) -> List[Brand]:

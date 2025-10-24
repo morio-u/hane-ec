@@ -16,7 +16,7 @@ from app.dependencies.session import (
     get_errors_from_session,
     get_or_create_session_token,
 )
-from app.models.shop import User
+from app.models.user import User
 from app.schemas.shop.cart import UpdateCartForm
 
 import logging

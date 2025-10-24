@@ -1,10 +1,10 @@
 from app.core.database import SessionLocal
-from app.models.shop.department import Department
-from app.models.shop.category import Category
-from app.models.shop.subcategory import Subcategory
-from app.models.shop.brand import Brand
-from app.models.shop.product import Product, PurchaseTypeEnum, ProductStatusEnum
-from app.models.shop.sku import Sku, SkuStatusEnum
+from app.models.department import Department
+from app.models.category import Category
+from app.models.subcategory import Subcategory
+from app.models.brand import Brand
+from app.models.product import Product, PurchaseTypeEnum, ProductStatusEnum
+from app.models.sku import Sku, SkuStatusEnum
 
 
 def seed_departments(db):

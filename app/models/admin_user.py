@@ -10,7 +10,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.sql import func
 from app.core.database import Base
-from app.models.shop.user import UserStatusEnum
+from app.models.user import UserStatusEnum
 
 
 class AdminUserStatusEnum(str, Enum):

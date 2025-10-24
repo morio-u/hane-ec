@@ -7,8 +7,8 @@ from app.core.database import get_db
 from app.core.config import settings
 from app.crud.shop.user import get_user_by_email
 from app.crud.admin.user import get_admin_user_by_email
-from app.models.shop.user import User
-from app.models.admin.admin_user import AdminUser
+from app.models.user import User
+from app.models.admin_user import AdminUser
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 

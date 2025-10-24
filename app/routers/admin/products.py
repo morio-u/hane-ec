@@ -15,9 +15,9 @@ from app.crud.shop.products import (
 )
 from app.dependencies.auth import get_current_admin_user
 from app.dependencies.session import get_errors_from_session
-from app.models.admin.admin_user import AdminUser
-from app.models.shop.product import ProductStatusEnum, PurchaseTypeEnum
-from app.models.shop.sku import SkuStatusEnum
+from app.models.admin_user import AdminUser
+from app.models.product import ProductStatusEnum, PurchaseTypeEnum
+from app.models.sku import SkuStatusEnum
 import logging
 
 logger = logging.getLogger(__name__)

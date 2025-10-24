@@ -1,7 +1,7 @@
 from typing import List, Dict, Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
-from app.models.shop import Product, Sku
+from app.models import Product, Sku
 
 
 def get_all_products(db: Session) -> List[Product]:

@@ -9,8 +9,7 @@ from alembic import context
 from app.core.database import Base
 
 # Import models
-from app.models.shop import *
-from app.models.admin import *
+from app.models import *
 
 # Get DATABASE_URL
 from app.core.config import settings
