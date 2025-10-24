@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.core.database import get_db
 from app.core.exception import RedirectHomeException
-from app.crud.common.masters import get_all_brands, get_all_colors, get_all_sizes
+from app.crud.common.masters import get_all_brands, get_all_colors, get_all_sizes, get_category_tree
 from app.crud.shop.products import (
     get_all_products,
     get_product_by_id,
@@ -68,6 +68,7 @@ def get_product_detail(
         brands = get_all_brands(db)
         colors = get_all_colors(db)
         sizes = get_all_sizes(db)
+        departments, categories, subcategories = get_category_tree(db)
 
         if product is None or skus is None:
             # For traceback
@@ -86,6 +87,9 @@ def get_product_detail(
             "skus": skus,
             "user": user,
             "brands": brands,
+            "departments": departments,
+            "categories": categories,
+            "subcategories": subcategories,
             "colors": colors,
             "sizes": sizes,
             "ProductStatusEnum": ProductStatusEnum,
