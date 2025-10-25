@@ -6,7 +6,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.core.database import get_db
 from app.core.exception import RedirectHomeException
-from app.crud.common.masters import get_all_brands, get_all_colors, get_all_sizes, get_category_tree
+from app.crud.common.masters import (
+    get_all_brands,
+    get_all_colors,
+    get_all_sizes,
+    get_all_category_tree,
+)
 from app.crud.shop.products import (
     get_all_products,
     get_product_by_id,
@@ -16,8 +21,10 @@ from app.crud.shop.products import (
 from app.dependencies.auth import get_current_admin_user
 from app.dependencies.session import get_errors_from_session
 from app.models.admin_user import AdminUser
-from app.models.product import ProductStatusEnum, PurchaseTypeEnum
+from app.models.product import Product, ProductStatusEnum, PurchaseTypeEnum
 from app.models.sku import SkuStatusEnum
+from app.schemas.admin.products import SaveProductForm
+from app.utils.constants import get_skus_from_form
 import logging
 
 logger = logging.getLogger(__name__)
@@ -68,7 +75,7 @@ def get_product_detail(
         brands = get_all_brands(db)
         colors = get_all_colors(db)
         sizes = get_all_sizes(db)
-        departments, categories, subcategories = get_category_tree(db)
+        departments, categories, subcategories = get_all_category_tree(db)
 
         if product is None or skus is None:
             # For traceback
@@ -98,3 +105,45 @@ def get_product_detail(
             "errors": errors,
         },
     )
+
+
+@router.post("/save")
+async def save_product(
+    request: Request,
+    form: SaveProductForm = Depends(SaveProductForm.as_form),
+    db: Session = Depends(get_db),
+    user: Optional[AdminUser] = Depends(get_current_admin_user),
+) -> RedirectResponse:
+    # The routing function must be asynchronous.
+    form_data = await request.form()
+
+    skus = get_skus_from_form(form_data)
+
+    product = db.query(Product).filter(Product.id == form.id).first()
+
+    if product is None or not skus:
+        # For traceback
+        logger.exception(f"Product not found: {form.id}")
+        return RedirectResponse(url="/admin/products", status_code=303)
+    # TODO:Add RedirectDashboardException
+
+    product.internal_part_number = form.internal_part_number
+    product.manufacturer_part_number = form.manufacturer_part_number
+    product.name = form.name
+    product.brand_id = form.brand_id
+    product.subcategory_id = form.subcategory_id
+    product.purchase_type = form.purchase_type
+    product.price_excluding_tax = form.price_excluding_tax
+    product.cost_price = form.cost_price
+    product.status = form.status
+    product.description = form.description
+
+    try:
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+    except Exception as e:
+        db.rollback()
+        raise e
+
+    return RedirectResponse(url=f"/admin/products/{ form.id }", status_code=303)

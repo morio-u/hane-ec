@@ -14,7 +14,7 @@ def get_all_products(db: Session) -> List[Product]:
     Returns:
         List[Product]: A list of all Product records (empty list if none found).
     """
-    return db.query(Product).all()
+    return db.query(Product).order_by(Product.id).all()
 
 
 def get_product_by_id(product_id: int, db: Session) -> Optional[Product]:
@@ -118,6 +118,7 @@ def get_products_with_quantity(product_ids: int, db: Session) -> List[Product]:
         db.query(Product, stock_subquery.c.total_quantity)
         .outerjoin(stock_subquery, Product.id == stock_subquery.c.product_id)
         .filter(Product.id.in_(product_ids))
+        .order_by(Product.id)
         .all()
     )
 

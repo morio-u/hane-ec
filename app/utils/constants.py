@@ -1,4 +1,36 @@
 import re
+from starlette.datastructures import FormData
+
+
+def get_skus_from_form(form_data: FormData) -> dict[str, dict[str, str]]:
+    """
+    Extracts SKU data from form input names and organizes it into a nested dictionary.
+
+    Parameters:
+        form_data (FormData): The form data containing key-value pairs from an HTML form.
+
+    Returns:
+        dict[str, dict[str, str]]:
+            A nested dictionary mapping each SKU ID to its corresponding field values.
+            Example:
+                {
+                    "1": {"color": "red", "size": "M"},
+                    "2": {"color": "blue"}
+                }
+    """
+    skus = {}
+    # Retrieve all keys and values from the form
+    for key, value in form_data.items():
+        # Only process entries whose name starts with "sku_inp["
+        if key.startswith("sku_inp["):
+            # Extract the SKU ID and field name from the key
+            match = re.match(r"sku_inp\[(\d+)\]\[(\w+)\]", key)
+            if match:
+                # Group individual SKU fields into a dictionary by SKU ID
+                sku_id, field = match.groups()
+                skus.setdefault(sku_id, {})[field] = value
+
+    return skus
 
 
 def clean_phone_number(phone_number: str) -> str:

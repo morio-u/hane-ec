@@ -10,7 +10,7 @@
         </h4>
 
         <!-- Product Edit Form -->
-        <form method="POST" action="" enctype="multipart/form-data">
+        <form method="POST" action="/admin/products/save" enctype="multipart/form-data">
             <!-- Product Info Card -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -19,11 +19,12 @@
                 <div class="card-body">
 
                     <!-- Basic Info -->
+                    <input type="hidden" class="form-control" name="id" value="{{ product.id }}">
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">Internal Part Number</label>
                             <input type="text" class="form-control" name="internal_part_number"
-                                value="{{ product.internal_part_number }}" readonly>
+                                value="{{ product.internal_part_number }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Manufacturer Part Number</label>
@@ -167,25 +168,25 @@
                         <tbody>
                             {% for sku in skus %}
                             <tr>
-                                <td><input type="text" class="form-control" name="skus[{{ sku.id }}][barcode]" value="{{ sku.barcode }}"></td>
+                                <td><input type="text" class="form-control" name="sku_inp[{{ sku.id }}][barcode]" value="{{ sku.barcode }}"></td>
                                 <td>
-                                    <select class="form-select" name="skus[{{ sku.id }}][color_id]">
+                                    <select class="form-select" name="sku_inp[{{ sku.id }}][color_id]">
                                         {% for color in colors %}
                                         <option value="{{ color.id }}" {% if color.id == sku.color_id %}selected{% endif %}>{{ color.name }}</option>
                                         {% endfor %}
                                     </select>
                                 </td>
                                 <td>
-                                    <select class="form-select" name="skus[{{ sku.id }}][size_id]">
+                                    <select class="form-select" name="sku_inp[{{ sku.id }}][size_id]">
                                         {% for size in sizes %}
                                         <option value="{{ size.id }}" {% if size.id == sku.size_id %}selected{% endif %}>{{ size.name }}</option>
                                         {% endfor %}
                                     </select>
                                 </td>
-                                <td><input type="number" class="form-control" name="skus[{{ sku.id }}][stock_quantity]" value="{{ sku.stock_quantity }}"></td>
-                                <td><input type="number" step="0.01" class="form-control" name="skus[{{ sku.id }}][special_price]" value="{{ sku.special_price or '' }}"></td>
+                                <td><input type="number" class="form-control" name="sku_inp[{{ sku.id }}][stock_quantity]" value="{{ sku.stock_quantity }}"></td>
+                                <td><input type="number" step="0.01" class="form-control" name="sku_inp[{{ sku.id }}][special_price]" value="{{ sku.special_price or '' }}"></td>
                                 <td>
-                                    <select class="form-select" name="skus[{{ sku.id }}][status]">
+                                    <select class="form-select" name="sku_inp[{{ sku.id }}][status]">
                                         {% for status in SkuStatusEnum %}
                                         <option value="{{ status.value }}" {% if status == sku.status %}selected{% endif %}>{{ status.name }}</option>
                                         {% endfor %}
