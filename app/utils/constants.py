@@ -1,8 +1,9 @@
 import re
+from typing import Optional
 from starlette.datastructures import FormData
 
 
-def get_skus_from_form(form_data: FormData) -> dict[str, dict[str, str]]:
+def get_skus_from_form(form_data: FormData) -> Optional[dict[str, dict[str, str]]]:
     """
     Extracts SKU data from form input names and organizes it into a nested dictionary.
 
@@ -30,6 +31,8 @@ def get_skus_from_form(form_data: FormData) -> dict[str, dict[str, str]]:
                 sku_id, field = match.groups()
                 skus.setdefault(sku_id, {})[field] = value
 
+    if not skus:
+        return None
     return skus
 
 

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, Field
 from fastapi import UploadFile, File, Form
 
@@ -17,7 +17,7 @@ class SaveProductForm(BaseModel):
     cost_price: Optional[float] = Field(None)
     status: str = Field(...)
     description: Optional[str] = Field(None)
-    image_file: Optional[UploadFile] = File(None)
+    image_files: Optional[List[UploadFile]] = File(None)
 
     @classmethod
     def as_form(
@@ -35,7 +35,7 @@ class SaveProductForm(BaseModel):
         cost_price: Optional[float] = Form(None),
         status: str = Form(...),
         description: Optional[str] = Form(None),
-        image_file: Optional[UploadFile] = File(None),
+        image_files: Optional[List[UploadFile]] = File(None),
     ) -> "SaveProductForm":
         return cls(
             id=id,
@@ -51,5 +51,5 @@ class SaveProductForm(BaseModel):
             cost_price=cost_price,
             status=status,
             description=description,
-            image_file=image_file,
+            image_files=image_files,
         )

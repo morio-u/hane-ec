@@ -1,11 +1,15 @@
+import os, uuid
 from typing import Optional, Union
 from starlette.templating import _TemplateResponse
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.exception import RedirectHomeException
+from app.crud.admin.products import update_product_from_form
+from app.crud.admin.sku import update_skus_from_form
 from app.crud.common.masters import (
     get_all_brands,
     get_all_colors,
@@ -21,7 +25,9 @@ from app.crud.shop.products import (
 from app.dependencies.auth import get_current_admin_user
 from app.dependencies.session import get_errors_from_session
 from app.models.admin_user import AdminUser
+from app.models.image import Image
 from app.models.product import Product, ProductStatusEnum, PurchaseTypeEnum
+from app.models.product_image import ProductImage
 from app.models.sku import SkuStatusEnum
 from app.schemas.admin.products import SaveProductForm
 from app.utils.constants import get_skus_from_form
@@ -110,40 +116,70 @@ def get_product_detail(
 @router.post("/save")
 async def save_product(
     request: Request,
-    form: SaveProductForm = Depends(SaveProductForm.as_form),
+    form_data: SaveProductForm = Depends(SaveProductForm.as_form),
     db: Session = Depends(get_db),
     user: Optional[AdminUser] = Depends(get_current_admin_user),
 ) -> RedirectResponse:
-    # The routing function must be asynchronous.
-    form_data = await request.form()
-
-    skus = get_skus_from_form(form_data)
-
-    product = db.query(Product).filter(Product.id == form.id).first()
-
-    if product is None or not skus:
-        # For traceback
-        logger.exception(f"Product not found: {form.id}")
-        return RedirectResponse(url="/admin/products", status_code=303)
-    # TODO:Add RedirectDashboardException
-
-    product.internal_part_number = form.internal_part_number
-    product.manufacturer_part_number = form.manufacturer_part_number
-    product.name = form.name
-    product.brand_id = form.brand_id
-    product.subcategory_id = form.subcategory_id
-    product.purchase_type = form.purchase_type
-    product.price_excluding_tax = form.price_excluding_tax
-    product.cost_price = form.cost_price
-    product.status = form.status
-    product.description = form.description
-
     try:
-        db.add(product)
-        db.commit()
-        db.refresh(product)
-    except Exception as e:
-        db.rollback()
-        raise e
+        # The routing function must be asynchronous.
+        form_all_data = await request.form()
 
-    return RedirectResponse(url=f"/admin/products/{ form.id }", status_code=303)
+        updated_product = update_product_from_form(form_data, db)
+        if updated_product is None:
+            # For traceback
+            logger.warning(f"Product not found: {form_data.id}")
+            return RedirectResponse(url="/admin/products", status_code=303)
+        # TODO:Add RedirectDashboardException
+
+        updated_skus = None
+        skus_from_form = get_skus_from_form(form_all_data)
+        if skus_from_form is not None:
+            updated_skus = update_skus_from_form(skus_from_form, db)
+
+        if form_data.image_files:
+            upload_dir = os.path.join(settings.UPLOADS_DIR, "products", str(form_data.id), "img")
+            os.makedirs(upload_dir, exist_ok=True)
+
+            for index, image_file in enumerate(form_data.image_files):
+                if image_file.filename:
+                    ext = os.path.splitext(image_file.filename)[1]
+                    filename = f"{uuid.uuid4()}{ext}"
+                    file_path = os.path.join(upload_dir, filename)
+                    relative_path = os.path.relpath(file_path, settings.APP_DIR)
+
+                    contents = await image_file.read()
+                    if not contents:
+                        continue
+
+                    with open(file_path, "wb") as f:
+                        f.write(contents)
+
+                    new_image = Image(url=relative_path, alt_text=form_data.name)
+                    db.add(new_image)
+                    db.flush()
+                    db.refresh(new_image)
+
+                    new_product_image = ProductImage(
+                        product_id=form_data.id,
+                        image_id=new_image.id,
+                        display_order=index,
+                        is_main=(index == 0)
+                    )
+                    db.add(new_product_image)
+
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+
+        db.refresh(updated_product)
+        if updated_skus:
+            for sku in updated_skus:
+                db.refresh(sku)
+        if new_product_image:
+            db.refresh(new_product_image)
+    except Exception:
+        raise
+
+    return RedirectResponse(url=f"/admin/products/{ form_data.id }", status_code=303)

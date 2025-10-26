@@ -132,13 +132,24 @@
                     <!-- Image Upload -->
                     <div class="mb-3">
                         <label class="form-label">Product Images</label>
-                        <div class="border rounded p-3 bg-light text-center">
-                            {% if product.image_url %}
-                                <img src="{{ url_for('static', path=product.image_url) }}" alt="Product Image" class="img-thumbnail mb-2" style="max-height: 150px;">
+                        <!-- one -->
+                        <div class="border rounded p-3 bg-light text-center mb-2">
+                            {% if product.product_images|length > 0 %}
+                                <img src="{{ url_for('static', path=product.product_images[0].image.url) }}" alt="Product Image 1" class="img-thumbnail mb-2" style="max-height: 150px;">
                             {% else %}
                                 <div class="text-muted mb-2">No image uploaded</div>
                             {% endif %}
-                            <input type="file" class="form-control" name="image_file" accept="image/*">
+                            <input type="file" class="form-control" name="image_files" accept="image/*">
+                        </div>
+
+                        <!-- two -->
+                        <div class="border rounded p-3 bg-light text-center">
+                            {% if product.product_images|length > 1 %}
+                                <img src="{{ url_for('static', path=product.product_images[1].image.url) }}" alt="Product Image 2" class="img-thumbnail mb-2" style="max-height: 150px;">
+                            {% else %}
+                                <div class="text-muted mb-2">No image uploaded</div>
+                            {% endif %}
+                            <input type="file" class="form-control" name="image_files" accept="image/*">
                         </div>
                     </div>
 

@@ -9,12 +9,14 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: int
     SECRET_KEY: str
-    ALGORITHM: str = "HS256"
+    ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     SESSION_TOKEN_EXPIRE_SECONDS: int
     DEBUG: bool = False
-    TOKEN_TYPE: str = "bearer"
+    TOKEN_TYPE: str
     ADMIN_SECRET_KEY: str
+    APP_DIR: str
+    UPLOADS_DIR: str
 
     class Config:
         env_file = ".env"
