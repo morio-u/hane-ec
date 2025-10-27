@@ -41,6 +41,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Brand</label>
                             <select class="form-select" name="brand_id">
+                                <option value="">-- Select Brand --</option>
                                 {% for brand in brands %}
                                 <option value="{{ brand.id }}" {% if brand.id == product.brand_id %}selected{% endif %}>
                                     {{ brand.name }}
@@ -55,6 +56,7 @@
                         <div class="col-md-4">
                             <label class="form-label">Department</label>
                             <select class="form-select" name="department_id" id="department-select">
+                                <option value="">-- Select Department --</option>
                                 {% for dept in departments %}
                                 <option value="{{ dept.id }}" {% if dept.id == product.department_id %}selected{% endif %}>
                                     {{ dept.name }}
@@ -66,6 +68,7 @@
                         <div class="col-md-4">
                             <label class="form-label">Category</label>
                             <select class="form-select" name="category_id" id="category-select">
+                                <option value="">-- Select Category --</option>
                                 {% for cat in categories %}
                                 <option value="{{ cat.id }}" {% if cat.id == product.category_id %}selected{% endif %}>
                                     {{ cat.name }}
@@ -77,6 +80,7 @@
                         <div class="col-md-4">
                             <label class="form-label">Subcategory</label>
                             <select class="form-select" name="subcategory_id" id="subcategory-select">
+                                <option value="">-- Select Subcategory --</option>
                                 {% for subcat in subcategories %}
                                 <option value="{{ subcat.id }}" {% if subcat.id == product.subcategory_id %}selected{% endif %}>
                                     {{ subcat.name }}
@@ -115,6 +119,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Status</label>
                             <select class="form-select" name="status">
+                                <option value="">-- Select Status --</option>
                                 {% for status in ProductStatusEnum %}
                                 <option value="{{ status.value }}" {% if status == product.status %}selected{% endif %}>
                                     {{ status.name }}
@@ -177,6 +182,7 @@
                             </tr>
                         </thead>
                         <tbody>
+                        {% if skus %}
                             {% for sku in skus %}
                             <tr>
                                 <td><input type="text" class="form-control" name="sku_inp[{{ sku.id }}][barcode]" value="{{ sku.barcode }}"></td>
@@ -210,6 +216,43 @@
                                 </td>
                             </tr>
                             {% endfor %}
+                        {% else %}
+                            <!-- SKUが存在しない場合の初期行（全て空欄） -->
+                            <tr>
+                                <td><input type="text" class="form-control" name="sku_inp[0][barcode]" value=""></td>
+                                <td>
+                                    <select class="form-select" name="sku_inp[0][color_id]">
+                                        <option value="">-- Select Color --</option>
+                                        {% for color in colors %}
+                                        <option value="{{ color.id }}">{{ color.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <select class="form-select" name="sku_inp[0][size_id]">
+                                        <option value="">-- Select Size --</option>
+                                        {% for size in sizes %}
+                                        <option value="{{ size.id }}">{{ size.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td><input type="number" class="form-control" name="sku_inp[0][stock_quantity]" value=""></td>
+                                <td><input type="number" step="0.01" class="form-control" name="sku_inp[0][special_price]" value=""></td>
+                                <td>
+                                    <select class="form-select" name="sku_inp[0][status]">
+                                        <option value="">-- Select Status --</option>
+                                        {% for status in SkuStatusEnum %}
+                                        <option value="{{ status.value }}">{{ status.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-icon btn-outline-danger">
+                                        <i class="bx bx-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endif %}
                         </tbody>
                     </table>
                 </div>

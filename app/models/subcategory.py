@@ -29,3 +29,7 @@ class Subcategory(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     category = relationship("Category", back_populates="subcategories")
+    # Note: No relationship to Product for now.
+    # Currently we do not define a back_populates relationship to Product
+    # because we rarely access products via subcategory.
+    # This can be added later if a use case arises.

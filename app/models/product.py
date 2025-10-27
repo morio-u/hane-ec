@@ -63,3 +63,7 @@ class Product(Base):
     product_images = relationship("ProductImage", back_populates="product")
     skus = relationship("Sku", back_populates="product")
     shipping_rule = relationship("ShippingRule", back_populates="products")
+    # Note: No relationship to Subcategory for now.
+    # Currently we do not define a SQLAlchemy relationship because
+    # category/subcategory usage is limited and infrequent.
+    # We can add the relationship later if needed for queries or template access.

@@ -2,6 +2,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from app.models.sku import Sku
 
+
 def update_skus_from_form(skus: dict, db: Session) -> Optional[List[Sku]]:
     """
     Updates multiple SKU records in the database.

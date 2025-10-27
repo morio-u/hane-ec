@@ -1,4 +1,5 @@
-import os, uuid
+import os
+import uuid
 from typing import Optional, Union
 from starlette.templating import _TemplateResponse
 from sqlalchemy.orm import Session
@@ -26,7 +27,7 @@ from app.dependencies.auth import get_current_admin_user
 from app.dependencies.session import get_errors_from_session
 from app.models.admin_user import AdminUser
 from app.models.image import Image
-from app.models.product import Product, ProductStatusEnum, PurchaseTypeEnum
+from app.models.product import ProductStatusEnum, PurchaseTypeEnum
 from app.models.product_image import ProductImage
 from app.models.sku import SkuStatusEnum
 from app.schemas.admin.products import SaveProductForm
@@ -54,12 +55,51 @@ def get_products(
 
     except Exception as e:
         # For traceback
-        logger.exception(f"Unexpected error in add_to_cart: {e}")
+        logger.exception(f"Unexpected error in get_products: {e}")
         raise RedirectHomeException("Unexpected error")
 
     return templates.TemplateResponse(
         "products.html",
         {"request": request, "products": products_with_qty, "user": user},
+    )
+
+
+@router.get("/create", response_class=HTMLResponse, name="create_product")
+def create_product(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: Optional[AdminUser] = Depends(get_current_admin_user),
+) -> _TemplateResponse:
+    try:
+        product = None
+        skus = None
+        brands = get_all_brands(db)
+        colors = get_all_colors(db)
+        sizes = get_all_sizes(db)
+        departments, categories, subcategories = get_all_category_tree(db)
+
+    except Exception as e:
+        # For traceback
+        logger.exception(f"Unexpected error in create_product: {e}")
+        raise RedirectHomeException("Unexpected error")
+
+    return templates.TemplateResponse(
+        "product_detail.html",
+        {
+            "request": request,
+            "product": product,
+            "skus": skus,
+            "user": user,
+            "brands": brands,
+            "departments": departments,
+            "categories": categories,
+            "subcategories": subcategories,
+            "colors": colors,
+            "sizes": sizes,
+            "ProductStatusEnum": ProductStatusEnum,
+            "PurchaseTypeEnum": PurchaseTypeEnum,
+            "SkuStatusEnum": SkuStatusEnum,
+        },
     )
 
 
@@ -82,6 +122,7 @@ def get_product_detail(
         colors = get_all_colors(db)
         sizes = get_all_sizes(db)
         departments, categories, subcategories = get_all_category_tree(db)
+        # TODO:対象の商品と紐づく department, category を取得して変数に入れる関数を作る
 
         if product is None or skus is None:
             # For traceback
@@ -89,7 +130,7 @@ def get_product_detail(
             return RedirectResponse(url="/products", status_code=303)
     except Exception as e:
         # For traceback
-        logger.exception(f"Unexpected error in add_to_cart: {e}")
+        logger.exception(f"Unexpected error in get_product_detail: {e}")
         raise RedirectHomeException("Unexpected error")
 
     return templates.TemplateResponse(
@@ -137,7 +178,9 @@ async def save_product(
             updated_skus = update_skus_from_form(skus_from_form, db)
 
         if form_data.image_files:
-            upload_dir = os.path.join(settings.UPLOADS_DIR, "products", str(form_data.id), "img")
+            upload_dir = os.path.join(
+                settings.UPLOADS_DIR, "products", str(form_data.id), "img"
+            )
             os.makedirs(upload_dir, exist_ok=True)
 
             for index, image_file in enumerate(form_data.image_files):
@@ -163,7 +206,7 @@ async def save_product(
                         product_id=form_data.id,
                         image_id=new_image.id,
                         display_order=index,
-                        is_main=(index == 0)
+                        is_main=(index == 0),
                     )
                     db.add(new_product_image)
 

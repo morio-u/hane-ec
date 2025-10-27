@@ -1,10 +1,12 @@
-from typing import List, Optional
+from typing import Optional
 from sqlalchemy.orm import Session
 from app.models.product import Product
 from app.schemas.admin.products import SaveProductForm
 
 
-def update_product_from_form(form_data: SaveProductForm, db: Session) -> Optional[Product]:
+def update_product_from_form(
+    form_data: SaveProductForm, db: Session
+) -> Optional[Product]:
     product = db.query(Product).filter(Product.id == form_data.id).first()
 
     if product is not None:
