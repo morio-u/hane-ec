@@ -1,7 +1,7 @@
 from typing import List, Dict, Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
-from app.models import Product, Sku
+from app.models import Category, Department, Product, Sku, Subcategory
 
 
 def get_all_products(db: Session) -> List[Product]:
@@ -129,3 +129,34 @@ def get_products_with_quantity(product_ids: int, db: Session) -> List[Product]:
         result.append(product)
 
     return result
+
+
+def get_product_with_category_tree(product_id: int, db: Session) -> Optional[Product]:
+    """
+    Retrieves a product along with its related category and department hierarchy.
+
+    This function fetches a product by ID and traces its relationships through
+    the `Subcategory` and `Category` tables to determine the corresponding
+    `department_id` and `category_id`. These IDs are temporarily added as dynamic
+    attributes (`product.department_id`, `product.category_id`) for convenience.
+
+    Parameters:
+        product_id (int): The unique ID of the product to retrieve.
+        db (Session): The SQLAlchemy database session.
+
+    Returns:
+        Product | None: The Product instance with additional dynamic attributes,
+                        or None if the product does not exist.
+    """
+    product = get_product_by_id(product_id, db)
+    if product is None:
+        return None
+    
+    subcategory = db.query(Subcategory).filter(Subcategory.id == product.subcategory_id).first()
+    category = db.query(Category).filter(Category.id == subcategory.category_id).first()
+    department = db.query(Department).filter(Department.id == category.department_id).first()
+
+    product.category_id = category.id
+    product.department_id = department.id
+
+    return product

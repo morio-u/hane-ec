@@ -21,6 +21,7 @@ from app.crud.shop.products import (
     get_all_products,
     get_product_by_id,
     get_products_with_quantity,
+    get_product_with_category_tree,
     get_skus_by_id,
 )
 from app.dependencies.auth import get_current_admin_user
@@ -113,16 +114,16 @@ def get_product_detail(
 ) -> Union[_TemplateResponse, RedirectResponse]:
     try:
         # Retrieves a product from the database by its ID.
-        product = get_product_by_id(product_id, db)
+        product = get_product_with_category_tree(product_id, db)
 
         # Retrieves all SKUs associated with a given product ID.
         skus = get_skus_by_id(product_id, db)
 
+        # Retrieves master data from the database
         brands = get_all_brands(db)
         colors = get_all_colors(db)
         sizes = get_all_sizes(db)
         departments, categories, subcategories = get_all_category_tree(db)
-        # TODO:対象の商品と紐づく department, category を取得して変数に入れる関数を作る
 
         if product is None or skus is None:
             # For traceback
@@ -179,7 +180,7 @@ async def save_product(
 
         if form_data.image_files:
             upload_dir = os.path.join(
-                settings.UPLOADS_DIR, "products", str(form_data.id), "img"
+                settings.UPLOADS_DIR, "products", "images", str(form_data.id)
             )
             os.makedirs(upload_dir, exist_ok=True)
 
