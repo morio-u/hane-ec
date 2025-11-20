@@ -16,6 +16,15 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Product Information</h5>
                 </div>
+            {% if errors %}
+                <div class="alert alert-danger" style="text-align: left;">
+                    <ul class="mb-3">
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
                 <div class="card-body">
 
                     <!-- Basic Info -->
@@ -95,6 +104,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Purchase Type</label>
                             <select class="form-select" name="purchase_type">
+                                <option value="">-- Purchase Type --</option>
                                 {% for type in PurchaseTypeEnum %}
                                 <option value="{{ type.value }}" {% if product.purchase_type == type %}selected{% endif %}>
                                     {{ type.name }}
@@ -188,6 +198,7 @@
                                 <td><input type="text" class="form-control" name="sku_inp[{{ sku.id }}][barcode]" value="{{ sku.barcode }}"></td>
                                 <td>
                                     <select class="form-select" name="sku_inp[{{ sku.id }}][color_id]">
+                                        <option value="">-- Select Color --</option>
                                         {% for color in colors %}
                                         <option value="{{ color.id }}" {% if color.id == sku.color_id %}selected{% endif %}>{{ color.name }}</option>
                                         {% endfor %}
@@ -195,6 +206,7 @@
                                 </td>
                                 <td>
                                     <select class="form-select" name="sku_inp[{{ sku.id }}][size_id]">
+                                        <option value="">-- Select Size --</option>
                                         {% for size in sizes %}
                                         <option value="{{ size.id }}" {% if size.id == sku.size_id %}selected{% endif %}>{{ size.name }}</option>
                                         {% endfor %}

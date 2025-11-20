@@ -1,14 +1,19 @@
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from app.core.config import settings
 from app.routers.shop import home, products, auth, users, cart, checkout
 from app.routers.admin import auth as admin_auth, dashboard, products as admin_products
 from app.core.exception import RedirectHomeException
-from app.core.exception_handler import redirect_home_handler
+from app.core.exception_handler import (
+    shop_redirect_home_handler,
+    admin_validation_exception_handler,
+)
 
 app = FastAPI()
-app.add_exception_handler(RedirectHomeException, redirect_home_handler)
+app.add_exception_handler(RedirectHomeException, shop_redirect_home_handler)
+app.add_exception_handler(RequestValidationError, admin_validation_exception_handler)
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 
 # shop

@@ -59,7 +59,7 @@ def get_product_detail(
         # Retrieves all SKUs associated with a given product ID.
         skus = get_skus_by_id(product_id, db)
 
-        if product is None or skus is None:
+        if product is None or not skus:
             # For traceback
             logger.exception(f"Product not found: {product_id}")
             return RedirectResponse(url="/products", status_code=303)

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.models import Category, Department, Product, Sku, Subcategory
 
 
-def get_all_products(db: Session) -> List[Product]:
+def get_all_products(db: Session) -> Optional[List[Product]]:
     """
     Retrieves all products from the database.
 
@@ -151,10 +151,14 @@ def get_product_with_category_tree(product_id: int, db: Session) -> Optional[Pro
     product = get_product_by_id(product_id, db)
     if product is None:
         return None
-    
-    subcategory = db.query(Subcategory).filter(Subcategory.id == product.subcategory_id).first()
+
+    subcategory = (
+        db.query(Subcategory).filter(Subcategory.id == product.subcategory_id).first()
+    )
     category = db.query(Category).filter(Category.id == subcategory.category_id).first()
-    department = db.query(Department).filter(Department.id == category.department_id).first()
+    department = (
+        db.query(Department).filter(Department.id == category.department_id).first()
+    )
 
     product.category_id = category.id
     product.department_id = department.id

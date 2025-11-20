@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.models.sku import Sku
 
 
-def get_sku_by_id(sku_id: int, db: Session) -> Optional[int]:
+def get_sku_by_id(sku_id: int, db: Session) -> Optional[Sku]:
     """
     Retrieve a single SKU object by its unique ID.
 

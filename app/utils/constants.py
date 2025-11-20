@@ -1,9 +1,10 @@
 import re
+from decimal import Decimal
 from typing import Optional
-from starlette.datastructures import FormData
+from app.models.sku import SkuStatusEnum
 
 
-def get_skus_from_form(form_data: FormData) -> Optional[dict[str, dict[str, str]]]:
+def get_skus_with_form(form_data: dict) -> Optional[dict[str, dict[str, str]]]:
     """
     Extracts SKU data from form input names and organizes it into a nested dictionary.
 
@@ -29,10 +30,29 @@ def get_skus_from_form(form_data: FormData) -> Optional[dict[str, dict[str, str]
             if match:
                 # Group individual SKU fields into a dictionary by SKU ID
                 sku_id, field = match.groups()
-                skus.setdefault(sku_id, {})[field] = value
 
-    if not skus:
-        return None
+                if field == "product_id":
+                    clean_value = int(value)
+                elif field == "barcode":
+                    clean_value = value
+                elif field == "color_id":
+                    clean_value = None if value == "" else int(value)
+                elif field == "size_id":
+                    clean_value = None if value == "" else int(value)
+                elif field == "stock_quantity":
+                    clean_value = int(value)
+                elif field == "special_price":
+                    clean_value = None if value == "" else Decimal(value)
+                elif field == "status":
+                    try:
+                        clean_value = SkuStatusEnum(value)
+                    except Exception:
+                        clean_value = SkuStatusEnum.inactive
+                else:
+                    skus[sku_id][field] = value
+
+                skus.setdefault(int(sku_id), {})[field] = clean_value
+
     return skus
 
 
@@ -110,3 +130,24 @@ def get_us_states() -> dict[str, str]:
         "wisconsin": "Wisconsin",
         "wyoming": "Wyoming",
     }
+
+
+def cast_dict_fields_to_int(form_dict: dict, int_fields: list) -> dict:
+    for field in int_fields:
+        if field in form_dict and form_dict[field].isdigit():
+            form_dict[field] = int(form_dict[field])
+    return form_dict
+
+
+def is_dict_empty(data: dict, empty_samples=(None, "", [])) -> bool:
+    """
+    Check if a dict is empty or all values are in empty_values.
+    """
+    if not data:
+        return True
+
+    for value in data.values():
+        if value not in empty_samples:
+            return False
+
+    return True
