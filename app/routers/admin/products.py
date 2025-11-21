@@ -5,10 +5,9 @@ from pydantic import ValidationError
 from fastapi import APIRouter, Depends, File, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from app.core.config import settings
 from app.core.database import get_db
 from app.core.exception import RedirectHomeException
-from app.crud.admin.products import save_product_with_form
+from app.crud.admin.products import save_product_images, save_product_with_form
 from app.crud.common.masters import (
     get_all_brands,
     get_all_colors,
@@ -25,9 +24,7 @@ from app.crud.shop.products import (
 from app.dependencies.auth import get_current_admin_user
 from app.dependencies.session import get_errors_from_session
 from app.models.admin_user import AdminUser
-from app.models.image import Image
 from app.models.product import ProductStatusEnum, PurchaseTypeEnum
-from app.models.product_image import ProductImage
 from app.models.sku import SkuStatusEnum
 from app.schemas.admin.products import SaveProductForm
 from app.utils.constants import (
@@ -40,8 +37,6 @@ from app.validators.admin.products import (
     render_form_with_errors,
     validate_save_product_form,
 )
-import os
-import uuid
 import logging
 
 logger = logging.getLogger(__name__)
@@ -221,49 +216,23 @@ async def save_product(
             return RedirectResponse(url="/admin/products", status_code=303)
         # TODO:Add RedirectDashboardException
 
-        # TODO:Update validation function
+        # If skus are entered, save them.
         if not is_dict_empty(skus_from_form):
             _ = save_skus_with_form(skus_from_form, saved_product.id, db)
 
         if form_data:
-            upload_dir = os.path.join(
-                settings.UPLOADS_DIR, "products", "images", str(form_data.id)
-            )
-            os.makedirs(upload_dir, exist_ok=True)
-
-            for index, image_file in enumerate(image_files):
-                if image_file.filename:
-                    ext = os.path.splitext(image_file.filename)[1]
-                    filename = f"{uuid.uuid4()}{ext}"
-                    file_path = os.path.join(upload_dir, filename)
-                    relative_path = os.path.relpath(file_path, settings.APP_DIR)
-
-                    contents = await image_file.read()
-                    if not contents:
-                        continue
-
-                    with open(file_path, "wb") as f:
-                        f.write(contents)
-
-                    new_image = Image(url=relative_path, alt_text=form_data.name)
-                    db.add(new_image)
-                    db.flush()
-
-                    new_product_image = ProductImage(
-                        product_id=form_data.id,
-                        image_id=new_image.id,
-                        display_order=index,
-                        is_main=(index == 0),
-                    )
-                    db.add(new_product_image)
+            # If images are entered, save them.
+            await save_product_images(form_data, image_files, db)
 
         try:
             db.commit()
         except Exception:
             db.rollback()
             raise
-    except Exception:
-        raise
+    except Exception as e:
+        # For traceback
+        logger.exception(f"Unexpected error in save_product: {e}")
+        raise RedirectHomeException("Unexpected error")
 
     return RedirectResponse(
         url=f"/admin/products/{ saved_product.id }", status_code=303
