@@ -13,7 +13,7 @@
                 <div class="col-md-4 text-center animate-box">
                     <div class="product">
                         <a href="/products/{{ product.id }}" class="full-link">
-                            <div class="product-grid" style="background-image:url('{{ url_for('static', path='images/products/product-1.jpg') }}');">
+                            <div class="product-grid" style="background-image:url('{{ product.main_image_url }}');">
                                 <div class="inner">
                                 <!-- <p>
                                     <a class="icon"><i class="icon-shopping-cart"></i></a>

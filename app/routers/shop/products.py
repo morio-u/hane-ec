@@ -4,9 +4,15 @@ from sqlalchemy.orm import Session
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from app.core.cookie import set_session_cookie
 from app.core.exception import RedirectHomeException
 from app.crud.shop.cart import process_add_to_cart
-from app.crud.shop.products import get_all_products, get_product_by_id, get_skus_by_id
+from app.crud.shop.products import (
+    get_all_products,
+    get_product_by_id,
+    get_product_images,
+    get_skus_by_id,
+)
 from app.core.database import get_db
 from app.dependencies.auth import get_current_user
 from app.dependencies.session import (
@@ -55,6 +61,7 @@ def get_product_detail(
     try:
         # Retrieves a product from the database by its ID.
         product = get_product_by_id(product_id, db)
+        images = get_product_images(product)
 
         # Retrieves all SKUs associated with a given product ID.
         skus = get_skus_by_id(product_id, db)
@@ -75,6 +82,8 @@ def get_product_detail(
             "product": product,
             "skus": skus,
             "user": user,
+            "main_image_url": product.main_image_url,
+            "images": images,
             "errors": errors,
         },
     )
@@ -112,4 +121,6 @@ def add_to_cart(
         logger.exception(f"Unexpected error in add_to_cart: {e}")
         raise RedirectHomeException("Unexpected error")
 
-    return RedirectResponse(url="/cart", status_code=303)
+    return set_session_cookie(
+        session_token, RedirectResponse(url="/cart", status_code=303)
+    )

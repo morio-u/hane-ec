@@ -14,8 +14,27 @@
             </div>
         {% endif %}
             <div class="col-md-6">
-                <div class="product-grid" style="background-image:url('{{ url_for('static', path='images/products/product-1.jpg') }}'); height:400px; background-size:cover;">
+
+                <!-- メイン画像 -->
+                <div id="mainImage"
+                    class="product-grid"
+                    style="background-image:url('{{ main_image_url }}');
+                            height:400px;
+                            background-size:cover;
+                            background-position:center;
+                            border-radius:8px;">
                 </div>
+
+                <!-- サムネイルスライダー -->
+                <div class="d-flex mt-3 thumbnails-wrapper">
+                    {% for image in images %}
+                    <div class="thumbnail"
+                        data-url="{{ image }}"
+                        style="background-image:url('{{ image }}');">
+                    </div>
+                    {% endfor %}
+                </div>
+
             </div>
             <div class="col-md-6">
                 <h4>{{ product.name }}</h4>

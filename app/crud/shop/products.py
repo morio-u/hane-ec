@@ -1,7 +1,8 @@
 from typing import List, Dict, Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
-from app.models import Category, Department, Product, Sku, Subcategory
+from app.core.config import settings
+from app.models import Category, Department, Product, ProductImage, Sku, Subcategory
 
 
 def get_all_products(db: Session) -> Optional[List[Product]]:
@@ -14,7 +15,19 @@ def get_all_products(db: Session) -> Optional[List[Product]]:
     Returns:
         List[Product]: A list of all Product records (empty list if none found).
     """
-    return db.query(Product).order_by(Product.id).all()
+    products = (
+        db.query(Product)
+        .options(joinedload(Product.product_images).joinedload(ProductImage.image))
+        .order_by(Product.id)
+        .all()
+    )
+
+    for p in products:
+        main_img = next((pi.image for pi in p.product_images if pi.is_main), None)
+        main_image_url = main_img.url if main_img else None
+        p.main_image_url = f"{settings.BASE_URL}/{main_image_url}"
+
+    return products
 
 
 def get_product_by_id(product_id: int, db: Session) -> Optional[Product]:
@@ -28,7 +41,18 @@ def get_product_by_id(product_id: int, db: Session) -> Optional[Product]:
     Returns:
         Optional[Product]: The product with the given ID, or None if not found.
     """
-    return db.query(Product).filter(Product.id == product_id).first()
+    product = (
+        db.query(Product)
+        .filter(Product.id == product_id)
+        .options(joinedload(Product.product_images).joinedload(ProductImage.image))
+        .first()
+    )
+
+    main_img = next((pi.image for pi in product.product_images if pi.is_main), None)
+    main_image_url = main_img.url if main_img else None
+    product.main_image_url = f"{settings.BASE_URL}/{main_image_url}"
+
+    return product
 
 
 def get_skus_by_id(product_id: int, db: Session) -> List[Sku]:
@@ -164,3 +188,11 @@ def get_product_with_category_tree(product_id: int, db: Session) -> Optional[Pro
     product.department_id = department.id
 
     return product
+
+
+def get_product_images(product: Product):
+    images = []
+    for pi in product.product_images:
+        images.append(f"{settings.BASE_URL}/{pi.image.url}")
+
+    return images

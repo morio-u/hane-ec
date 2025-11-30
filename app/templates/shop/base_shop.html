@@ -48,6 +48,25 @@
 	<!-- Theme style  -->
 	<link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
 
+	<style>
+	.thumbnails-wrapper {
+		display: flex;
+		flex-direction: row;  /* 横並び強制 */
+		gap: 10px;            /* サムネイル間の余白 */
+		overflow-x: auto;     /* 横スクロールを許可 */
+		padding-bottom: 5px;
+	}
+
+	.thumbnail {
+		width: 80px;
+		height: 80px;
+		background-size: cover;
+		background-position: center;
+		border-radius: 4px;
+		cursor: pointer;
+		flex-shrink: 0; /* 横スクロール時に縮まないように */
+	}
+	</style>
 	<!-- Modernizr JS -->
 	<script src="{{ url_for('static', path='js/modernizr-2.6.2.min.js') }}"></script>
 	</head>
@@ -200,6 +219,19 @@
 	<!-- Main -->
 	<script src="{{ url_for('static', path='js/main.js') }}"></script>
 
+	<script>
+	document.addEventListener("DOMContentLoaded", function () {
+		const mainImage = document.getElementById("mainImage");
+		const thumbs = document.querySelectorAll(".thumbnail");
+
+		thumbs.forEach(thumb => {
+			thumb.addEventListener("click", () => {
+				const url = thumb.getAttribute("data-url");
+				mainImage.style.backgroundImage = `url('${url}')`;
+			});
+		});
+	});
+	</script>
 	</body>
 </html>
 

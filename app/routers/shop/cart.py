@@ -31,7 +31,6 @@ templates = Jinja2Templates(directory="app/templates/shop")
 @router.get("")
 def view_cart(
     request: Request,
-    response: Response,
     session_token: str = Depends(get_or_create_session_token),
     db: Session = Depends(get_db),
     user: Optional[User] = Depends(get_current_user),
