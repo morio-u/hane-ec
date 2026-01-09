@@ -1,0 +1,111 @@
+{% extends "base_shop.html" %}
+
+{% block content %}
+<div id="fh5co-shipping">
+    <div class="container">
+        <div class="row animate-box">
+            <div class="col-md-6 col-md-offset-3 text-center fh5co-heading">
+                <h2>Checkout</h2>
+                <p>Please enter your shipping and payment details below.</p>
+            </div>
+        </div>
+    {% if errors %}
+        <div class="alert alert-danger" style="text-align: left;">
+            <ul class="mb-3">
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+        <div class="row animate-box">
+            <div class="col-md-6 col-md-offset-3 col-xs-10 col-xs-offset-1">
+                <form action="/checkout/confirm" method="post" class="form-horizontal">
+
+                    <!-- Name -->
+                    <div class="form-group">
+                        <label for="shipping_last_name" class="sr-only">Last Name</label>
+                        <input type="text" class="form-control" id="shipping_last_name" name="shipping_last_name" placeholder="Last Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="shipping_first_name" class="sr-only">First Name</label>
+                        <input type="text" class="form-control" id="shipping_first_name" name="shipping_first_name" placeholder="First Name" required>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="form-group">
+                        <label for="shipping_address_line1" class="sr-only">Address Line 1</label>
+                        <input type="text" class="form-control" id="shipping_address_line1" name="shipping_address_line1" placeholder="Street Address" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="shipping_address_line2" class="sr-only">Address Line 2</label>
+                        <input type="text" class="form-control" id="shipping_address_line2" name="shipping_address_line2" placeholder="Apartment, Building, etc. (Optional)">
+                    </div>
+                    <div class="form-group">
+                        <label for="shipping_city" class="sr-only">City</label>
+                        <input type="text" class="form-control" id="shipping_city" name="shipping_city" placeholder="City" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="shipping_state" class="sr-only">State</label>
+                        <select class="form-control" id="shipping_state" name="shipping_state" required>
+                            <option value="">Select State</option>
+                        {% for key, name in states.items() %}
+                            <option value="{{ key }}">{{ name }}</option>
+                        {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="shipping_zip" class="sr-only">ZIP Code</label>
+                        <input type="text" class="form-control" id="shipping_zip" name="shipping_zip" placeholder="ZIP Code" required>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="form-group">
+                        <label for="shipping_phone_number" class="sr-only">Phone Number</label>
+                        <input type="tel" class="form-control" id="shipping_phone_number" name="shipping_phone_number" placeholder="Phone Number" required>
+                    </div>
+
+                    <!-- Shipping Method -->
+                    <div class="form-group">
+                        <label for="shipping_method" class="sr-only">Shipping Method</label>
+                        <select class="form-control" id="shipping_method" name="shipping_method" required>
+                            <option value="">Select Shipping Method</option>
+                            <option value="standard">Standard (3-5 days)</option>
+                            <option value="express">Express (1-2 days)</option>
+                            <option value="pickup">In-store Pickup</option>
+                        </select>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="form-group">
+                        <label for="payment_method" class="sr-only">Payment Method</label>
+                        <select class="form-control" id="payment_method" name="payment_method" required>
+                            <option value="credit_card">Credit Card</option>
+                        </select>
+                    </div>
+
+                    <!-- Credit Card Form -->
+                    <div class="form-group">
+                        <label for="card_number" class="sr-only">Card Number</label>
+                        <input type="text" class="form-control" id="card_number" name="card_number" placeholder="Card Number" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="card_name" class="sr-only">Name on Card</label>
+                        <input type="text" class="form-control" id="card_name" name="card_name" placeholder="Name on Card" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="card_cvv" class="sr-only">Security Code</label>
+                        <input type="text" class="form-control" id="card_cvv" name="card_cvv" placeholder="CVV" required>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block">Proceed to Confirmation</button>
+                    </div>
+                    <p class="text-center"><a href="/cart">Back to Cart</a></p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
