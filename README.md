@@ -21,6 +21,7 @@ and operational best practices commonly required in real production environments
 
 ## Technology Stack
 - Backend: Python, FastAPI
+- Templating: Jinja2
 - Database: PostgreSQL
 - Containerization: Docker
 - Migration: Alembic
