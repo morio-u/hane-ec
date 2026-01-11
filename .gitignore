@@ -221,3 +221,8 @@ __marimo__/
 # app
 app/static/
 app/templates/admin/legacy
+
+# other
+*.key
+*.pem
+*.crt
