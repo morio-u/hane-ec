@@ -9,30 +9,43 @@ but also to progressively incorporate infrastructure, deployment,
 and operational best practices commonly required in real production environments.
 
 ## Current Status
-- Core EC application implemented (API + admin functionality)
-- Local development environment using Docker
-- Database schema management with Alembic
+
+* Core EC application implemented (API + admin functionality)
+* Local development environment using Docker
+* Database schema management with Alembic
+* AWS infrastructure configured (VPC, Subnets, Route Tables, Security Groups, EC2)
+* Application deployed to Amazon EC2
+* Nginx configured as a web server
+* Live demo environment available for testing
 
 ## Planned (In Progress)
-- AWS-based infrastructure (EC2 or managed services)
-- CI/CD pipeline integration
-- Automated testing
-- Production deployment and operational validation
+
+* Amazon RDS integration
+* Reverse proxy and service management improvements
+* CI/CD pipeline integration
+* Automated testing
+* Production deployment and operational validation
 
 ## Technology Stack
-- Backend: Python, FastAPI
-- Templating: Jinja2
-- Database: PostgreSQL
-- Containerization: Docker
-- Migration: Alembic
-- Version Control: GitHub
+
+* Backend: Python, FastAPI
+* Templating: Jinja2
+* Database: PostgreSQL
+* Infrastructure: AWS (VPC, EC2, Security Groups)
+* Web Server: Nginx
+* Containerization: Docker
+* Migration: Alembic
+* Version Control: GitHub
 
 ## Notes
-- This project is not yet deployed to a public production environment.
-- All configurations, data, and examples are non-production and for demonstration purposes only.
-- No proprietary or confidential information is included.
+
+* This project is currently under active development.
+* The live environment is intended for learning and demonstration purposes.
+* All configurations, data, and examples are non-production and for demonstration purposes only.
+* No proprietary or confidential information is included.
 
 ## Purpose
+
 This project serves as a learning and demonstration platform to show how
 application development can evolve toward production-ready and
 operationally sustainable systems.
